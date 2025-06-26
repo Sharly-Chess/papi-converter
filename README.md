@@ -50,7 +50,7 @@ A Java utility to convert between JSON configuration files and PAPI (.mdb) tourn
    build_app_win.bat
    ```
 
-3. **Create minimal JRE (optional):**
+3. **Create minimal JRE (you only need to do this once):**
    ```cmd
    build_jre_win.bat
    ```

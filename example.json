@@ -17,5 +17,43 @@
     "DateFin": "2024-01-21",
     "Arbitre": "John Smith",
     "Homologation": "12345"
-  }
+  },
+  "players": [
+    {
+      "lastName": "Dupont",
+      "firstName": "Jean",
+      "gender": "M",
+      "birthDate": "15/03/1985",
+      "elo": 1850,
+      "rapidElo": 1820,
+      "federation": "FRA",
+      "club": "Paris Chess Club",
+      "email": "jean.dupont@example.com",
+      "rounds": []
+    },
+    {
+      "lastName": "Martin",
+      "firstName": "Claire",
+      "gender": "F",
+      "birthDate": "22/08/1990",
+      "elo": 1650,
+      "federation": "FRA",
+      "club": "Lyon Chess Club",
+      "rounds": []
+    },
+    {
+      "lastName": "Johnson",
+      "firstName": "Robert",
+      "gender": "M",
+      "birthDate": "10/12/1978",
+      "elo": 1920,
+      "rapidElo": 1900,
+      "blitzElo": 1850,
+      "federation": "ENG",
+      "club": "London Chess Club",
+      "email": "robert.johnson@example.com",
+      "phone": "0123456789",
+      "rounds": []
+    }
+  ]
 }
