@@ -8,9 +8,9 @@
     "ClassElo": "Standard",
     "EloBase1": "1200",
     "EloBase2": "2400",
-    "Dep1": "75",
-    "Dep2": "92",
-    "Dep3": "94",
+    "Dep1": "Brésilien",
+    "Dep2": "Performance",
+    "Dep3": "",
     "DecomptePoints": "1",
     "Lieu": "Paris Chess Club",
     "DateDebut": "2024-01-15",
@@ -62,6 +62,7 @@
       "club": "London Chess Club",
       "email": "sammy.plat@sharly-chess.com",
       "phone": "0123456789",
+      "fixedBoard": 2,
       "rounds": [
         {"color": "B", "opponent": 5, "result": 1},
         {"color": "N", "opponent": 3, "result": 3}
@@ -79,6 +80,7 @@
       "club": "London Chess Club",
       "email": "tim.armes@sharly-chess.com",
       "phone": "0123456789",
+      "checkedIn": true,
       "rounds": [
         {"color": "N", "opponent": 4, "result": 1},
         {"color": "F", "result": 7}

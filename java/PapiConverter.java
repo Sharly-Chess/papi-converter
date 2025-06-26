@@ -27,7 +27,7 @@ public class PapiConverter {
         
         if (inputFile.toLowerCase().endsWith(".json")) {
             convertJsonToMdb(inputFile, outputFile);
-        } else if (inputFile.toLowerCase().endsWith(".mdb")) {
+        } else if (inputFile.toLowerCase().endsWith(".mdb") || inputFile.toLowerCase().endsWith(".papi")) {
             convertMdbToJson(inputFile, outputFile);
         } else {
             System.err.println("Error: Input file must be either .json or .mdb");
@@ -166,7 +166,7 @@ public class PapiConverter {
         
         // Generate output filename if not provided
         if (jsonFile == null) {
-            jsonFile = mdbFile.replaceAll("\\.mdb$", ".json");
+            jsonFile = mdbFile.replaceAll("\\.mdb$|.papi$", ".json");
         }
         
         // Check if MDB file exists
@@ -176,19 +176,65 @@ public class PapiConverter {
         
         System.out.println("Reading MDB from: " + mdbFile);
         
-        // TODO: Implement MDB to JSON conversion logic
-        // This would involve:
-        // 1. Opening the MDB database
-        // 2. Reading table schemas and data
-        // 3. Converting to JSON format
+        // Open the MDB database
+        Database db = DatabaseBuilder.open(new File(mdbFile));
         
-        long mdbSize = Files.size(Paths.get(mdbFile));
-        System.out.println("MDB file size: " + mdbSize + " bytes");
+        Map<String, Object> jsonData = new HashMap<>();
         
-        // Placeholder: Create sample JSON
-        String jsonOutput = "{\n  \"database\": \"" + new File(mdbFile).getName() + "\",\n  \"tables\": [],\n  \"converted_at\": \"" + java.time.Instant.now() + "\"\n}";
+        try {
+            // Read tournament variables from INFO table
+            System.out.println("Reading tournament variables...");
+            Table infoTable = db.getTable("INFO");
+            Map<String, String> variables = new HashMap<>();
+            
+            // Define important variables to extract
+            List<String> importantVariables = Arrays.asList(
+                "Nom", "Genre", "NbrRondes", "Pairing", "Cadence", "ClassElo", 
+                "EloBase1", "EloBase2", "Dep1", "Dep2", "Dep3", "DecomptePoints", 
+                "Lieu", "DateDebut", "DateFin", "Arbitre", "Homologation"
+            );
+            
+            for (Row row : infoTable) {
+                Object variableObj = row.get("Variable");
+                Object valueObj = row.get("Value");
+                
+                if (variableObj != null && valueObj != null) {
+                    String varName = variableObj.toString();
+                    if (importantVariables.contains(varName)) {
+                        variables.put(varName, valueObj.toString());
+                    }
+                }
+            }
+            
+            jsonData.put("variables", variables);
+            System.out.println("  Found " + variables.size() + " tournament variables");
+            
+            // Read players from JOUEUR table
+            System.out.println("Reading players data...");
+            Table joueurTable = db.getTable("JOUEUR");
+            List<Map<String, Object>> players = new java.util.ArrayList<>();
+            
+            for (Row row : joueurTable) {
+                Object refObj = row.get("Ref");
+                if (refObj != null && ((Number)refObj).intValue() > 1) { // Skip EXEMPT player (Ref=1)
+                    Map<String, Object> player = convertPlayerRowToJson(row);
+                    if (player != null) {
+                        players.add(player);
+                    }
+                }
+            }
+            
+            jsonData.put("players", players);
+            System.out.println("  Found " + players.size() + " players");
+            
+        } finally {
+            db.close();
+        }
         
-        Files.write(Paths.get(jsonFile), jsonOutput.getBytes());
+        // Convert to JSON and write to file
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.writerWithDefaultPrettyPrinter().writeValue(new File(jsonFile), jsonData);
+        
         System.out.println("Output JSON file: " + jsonFile);
         System.out.println("JSON conversion completed successfully!");
     }
@@ -245,6 +291,7 @@ public class PapiConverter {
         setFieldIfExists(rowData, playerNode, "AffType", "licenceType");
         setFieldIfExists(rowData, playerNode, "InscriptionRegle", "paid");
         setFieldIfExists(rowData, playerNode, "InscriptionDu", "owed");
+        setFieldIfExists(rowData, playerNode, "Fixe", "fixedBoard");
 
         // Boolean fields
         if (playerNode.has("checkedIn")) {
@@ -327,6 +374,104 @@ public class PapiConverter {
                     }
                 }
             }
+        }
+    }
+    
+    private static Map<String, Object> convertPlayerRowToJson(Row row) throws Exception {
+        Map<String, Object> player = new HashMap<>();
+        
+        // Basic player information
+        addFieldIfNotNull(player, "refFFE", row.get("RefFFE"));
+        addFieldIfNotNull(player, "nr", row.get("Nr"));
+        addFieldIfNotNull(player, "nrFFE", row.get("NrFFE"));
+        addFieldIfNotNull(player, "lastName", row.get("Nom"));
+        addFieldIfNotNull(player, "firstName", row.get("Prenom"));
+        addFieldIfNotNull(player, "gender", row.get("Sexe"));
+        
+        // Birth date - convert from Date to DD/MM/YYYY format
+        Object birthDateObj = row.get("NeLe");
+        if (birthDateObj instanceof java.util.Date) {
+            java.util.Date date = (java.util.Date) birthDateObj;
+            java.time.LocalDate localDate = date.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            player.put("birthDate", localDate.format(formatter));
+        }
+        
+        addFieldIfNotNull(player, "category", row.get("Cat"));
+        addFieldIfNotNull(player, "elo", row.get("Elo"));
+        addFieldIfNotNull(player, "rapidElo", row.get("Rapide"));
+        addFieldIfNotNull(player, "blitzElo", row.get("Blitz"));
+        addFieldIfNotNull(player, "federation", row.get("Federation"));
+        addFieldIfNotNull(player, "club", row.get("Club"));
+        addFieldIfNotNull(player, "league", row.get("Ligue"));
+        addFieldIfNotNull(player, "fideElo", row.get("Fide"));
+        addFieldIfNotNull(player, "fideRapidElo", row.get("RapideFide"));
+        addFieldIfNotNull(player, "fideBlitzElo", row.get("BlitzFide"));
+        addFieldIfNotNull(player, "fideCode", row.get("FideCode"));
+        addFieldIfNotNull(player, "fideTitle", row.get("FideTitre"));
+        addFieldIfNotNull(player, "licenceType", row.get("AffType"));
+        addFieldIfNotNull(player, "paid", row.get("InscriptionRegle"));
+        addFieldIfNotNull(player, "owed", row.get("InscriptionDu"));
+        addFieldIfNotNull(player, "fixedBoard", row.get("Fixe"));
+
+        // Boolean fields
+        Object pointeObj = row.get("Pointe");
+        if (pointeObj instanceof Boolean) {
+            player.put("checkedIn", pointeObj);
+        }
+        
+        // Contact information
+        addFieldIfNotNull(player, "address", row.get("Adresse"));
+        addFieldIfNotNull(player, "postalCode", row.get("CP"));
+        addFieldIfNotNull(player, "phone", row.get("Tel"));
+        addFieldIfNotNull(player, "email", row.get("EMail"));
+        addFieldIfNotNull(player, "comment", row.get("Commentaire"));
+        
+        // Round results
+        List<Map<String, Object>> rounds = new java.util.ArrayList<>();
+        for (int roundNum = 1; roundNum <= 24; roundNum++) {
+            String roundStr = String.format("%02d", roundNum);
+            
+            Object colorObj = row.get("Rd" + roundStr + "Cl");
+            Object opponentObj = row.get("Rd" + roundStr + "Adv");
+            Object resultObj = row.get("Rd" + roundStr + "Res");
+            
+            // Only include rounds that have non-default values
+            boolean hasColor = colorObj != null && !"R".equals(colorObj.toString());
+            boolean hasOpponent = opponentObj != null && ((Number)opponentObj).intValue() > 0;
+            boolean hasResult = resultObj != null && ((Number)resultObj).intValue() > 0;
+            
+            if (hasColor || hasOpponent || hasResult) {
+                
+                Map<String, Object> round = new HashMap<>();
+                
+                if (colorObj != null && !"R".equals(colorObj.toString())) {
+                    round.put("color", colorObj.toString());
+                }
+                
+                if (opponentObj != null && !Integer.valueOf(0).equals(opponentObj)) {
+                    round.put("opponent", opponentObj);
+                }
+                
+                if (resultObj != null && !Integer.valueOf(0).equals(resultObj)) {
+                    round.put("result", resultObj);
+                }
+                
+                // Always add round to list if we get here (has non-default values)
+                rounds.add(round);
+            }
+        }
+        
+        if (!rounds.isEmpty()) {
+            player.put("rounds", rounds);
+        }
+        
+        return player;
+    }
+    
+    private static void addFieldIfNotNull(Map<String, Object> map, String key, Object value) {
+        if (value != null && !value.toString().trim().isEmpty()) {
+            map.put(key, value);
         }
     }
 }
