@@ -33,8 +33,8 @@
       "owed": 10,
       "comment": "This is a comment",
       "rounds": [
-        {"color": "B", "opponent": 3, "result": 1},
-        {"color": "B", "opponent": 1, "result": 6}
+        {"color": "B", "opponent": 1, "result": 1},
+        {"color": "B", "result": 6}
       ]
     },
     {
@@ -46,8 +46,8 @@
       "federation": "FRA",
       "club": "Lyon Chess Club",
       "rounds": [
-        {"color": "N", "opponent": 2, "result": 1},
-        {"color": "B", "opponent": 4, "result": 3}
+        {"color": "N", "opponent": 0, "result": 3},
+        {"color": "B", "opponent": 2, "result": 2}
       ]
     },
     {
@@ -64,8 +64,8 @@
       "phone": "0123456789",
       "fixedBoard": 2,
       "rounds": [
-        {"color": "B", "opponent": 5, "result": 1},
-        {"color": "N", "opponent": 3, "result": 3}
+        {"color": "B", "opponent": 3, "result": 6},
+        {"color": "N", "opponent": 1, "result": 2}
       ]
     },
     {
@@ -82,8 +82,8 @@
       "phone": "0123456789",
       "checkedIn": true,
       "rounds": [
-        {"color": "N", "opponent": 4, "result": 1},
-        {"color": "F", "result": 7}
+        {"color": "N", "opponent": 2, "result": 4},
+        {"color": "F"}
       ]
     }
   ]

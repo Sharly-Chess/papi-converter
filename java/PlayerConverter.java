@@ -13,6 +13,22 @@ import com.fasterxml.jackson.databind.JsonNode;
 public class PlayerConverter {
     
     /**
+     * Converts JSON player reference (0-based) to PAPI database reference (2-based).
+     * JSON: 0, 1, 2, 3... -> PAPI: 2, 3, 4, 5...
+     */
+    public static int jsonRefToPapiRef(int jsonRef) {
+        return jsonRef + 2;
+    }
+    
+    /**
+     * Converts PAPI database reference (2-based) to JSON player reference (0-based).
+     * PAPI: 2, 3, 4, 5... -> JSON: 0, 1, 2, 3...
+     */
+    public static int papiRefToJsonRef(int papiRef) {
+        return papiRef - 2;
+    }
+    
+    /**
      * Adds a player from JSON to the JOUEUR table.
      * @param playerTable The JOUEUR table
      * @param playerNode The JSON node containing player data
@@ -106,17 +122,45 @@ public class PlayerConverter {
                     rowData.put("Rd" + roundStr + "Cl", roundNode.get("color").asText());
                 }
                 
-                // Opponent (Adv) - opponent player reference
-                if (roundNode.has("opponent")) {
-                    int opponent = roundNode.get("opponent").asInt();
-                    if (opponent > 0) {
-                        rowData.put("Rd" + roundStr + "Adv", opponent);
-                    }
+                // Get result first to check for bye
+                int result = 0;
+                if (roundNode.has("result")) {
+                    result = roundNode.get("result").asInt();
+                    rowData.put("Rd" + roundStr + "Res", result);
                 }
                 
-                // Result (Res) - NO_RESULT = 0, LOSS = 1, DRAW = 2, GAIN = 3,...
-                if (roundNode.has("result")) {
-                    rowData.put("Rd" + roundStr + "Res", roundNode.get("result").asInt());
+                // Opponent (Adv) - opponent player reference
+                if (roundNode.has("opponent")) {
+                    int jsonOpponent = roundNode.get("opponent").asInt();
+                    if (jsonOpponent >= 0) {
+                        // Convert JSON opponent reference to PAPI reference
+                        int papiOpponent = jsonRefToPapiRef(jsonOpponent);
+                        rowData.put("Rd" + roundStr + "Adv", papiOpponent);
+                    }
+                } else if (result == 6) {
+                    // Auto-detect bye: result 6 without opponent means bye against EXEMPT (player 1)
+                    rowData.put("Rd" + roundStr + "Adv", 1);
+                    System.out.println("    Auto-detected bye for player " + papiRefToJsonRef(playerRef) + " in round " + roundNum + " (vs EXEMPT)");
+
+                    // Find the EXEMPT player (Ref=1)
+                    Row exemptRow = null;
+                    for (Row row : playerTable) {
+                        Object refObj = row.get("Ref");
+                        if (refObj != null && ((Number)refObj).intValue() == 1) {
+                            exemptRow = row;
+                            break;
+                        }
+                    }
+        
+                    if (exemptRow != null) {
+                        // Now set the new values
+                        exemptRow.put("Rd" + roundStr + "Cl", "N");
+                        exemptRow.put("Rd" + roundStr + "Adv", playerRef);
+                        exemptRow.put("Rd" + roundStr + "Res", 0);
+                        
+                        // Update the EXEMPT row in the table
+                        playerTable.updateRow(exemptRow);
+                    }
                 }
                 
                 roundNum++;
@@ -216,7 +260,12 @@ public class PlayerConverter {
                 }
                 
                 if (opponentObj != null && !Integer.valueOf(0).equals(opponentObj)) {
-                    round.put("opponent", opponentObj);
+                    int papiOpponent = ((Number)opponentObj).intValue();
+                    if (papiOpponent > 1) {  // Exclude EXEMPT player (ref 1) from JSON output
+                        // Convert PAPI opponent reference to JSON reference
+                        int jsonOpponent = papiRefToJsonRef(papiOpponent);
+                        round.put("opponent", jsonOpponent);
+                    }
                 }
                 
                 if (resultObj != null && !Integer.valueOf(0).equals(resultObj)) {

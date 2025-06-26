@@ -171,7 +171,7 @@ Each player can have up to 24 rounds with the following structure:
   - `3` = Win
   - `4` = Forfeit loss
   - `5` = Double forfeit
-  - `6` = Forfeit win
+  - `6` = Forfeit win (bye round) - **Auto-detects opponent as EXEMPT**
   - `7` = Zero point bye
   - `8` = Half point bye
   - `9` = Pairing allocated bye
@@ -180,6 +180,23 @@ Each player can have up to 24 rounds with the following structure:
   - `12` = Unrated draw
   - `13` = Unrated win
   - `14` = Rest game
+
+### Bye Round Auto-Detection
+
+When a player receives a bye (forfeit win), you can simply specify `"result": 6` without an opponent:
+
+```json
+{
+  "rounds": [
+    {"color": "B", "result": 6}  // Automatically plays against EXEMPT player
+  ]
+}
+```
+
+The converter will automatically:
+- Set the opponent to player 1 (EXEMPT)
+- Update the EXEMPT player's record to show they played as Black with result 0
+- Create proper pairing records in both directions
 
 ### Important Player Data Notes
 
