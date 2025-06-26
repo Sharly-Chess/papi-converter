@@ -182,12 +182,13 @@ public class PlayerConverter {
     }
     
     /**
-     * Converts a database row to JSON player format.
+     * Converts a database row to JSON player format with reference mapping.
      * @param row The database row
+     * @param papiRefToJsonIndexMap Mapping from PAPI references to JSON array indices
      * @return A map representing the player in JSON format
      * @throws Exception if conversion fails
      */
-    public static Map<String, Object> convertRowToJson(Row row) throws Exception {
+    public static Map<String, Object> convertRowToJsonWithMapping(Row row, Map<Integer, Integer> papiRefToJsonIndexMap) throws Exception {
         Map<String, Object> player = new HashMap<>();
         
         // Basic player information
@@ -262,9 +263,14 @@ public class PlayerConverter {
                 if (opponentObj != null && !Integer.valueOf(0).equals(opponentObj)) {
                     int papiOpponent = ((Number)opponentObj).intValue();
                     if (papiOpponent > 1) {  // Exclude EXEMPT player (ref 1) from JSON output
-                        // Convert PAPI opponent reference to JSON reference
-                        int jsonOpponent = papiRefToJsonRef(papiOpponent);
-                        round.put("opponent", jsonOpponent);
+                        // Use mapping from PAPI reference to JSON index
+                        if (papiRefToJsonIndexMap.containsKey(papiOpponent)) {
+                            int jsonOpponent = papiRefToJsonIndexMap.get(papiOpponent);
+                            round.put("opponent", jsonOpponent);
+                        }
+                        else {
+                            throw new Exception("Opponent reference " + papiOpponent + " not found in mapping");
+                        }
                     }
                 }
                 

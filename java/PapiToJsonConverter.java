@@ -4,6 +4,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ArrayList;
@@ -99,15 +100,39 @@ public class PapiToJsonConverter {
     private static List<Map<String, Object>> processPlayers(Database db) throws Exception {
         System.out.println("Reading players data...");
         Table joueurTable = db.getTable("JOUEUR");
-        List<Map<String, Object>> players = new ArrayList<>();
         
+        // Step 1: Collect all player rows and sort them by Ref field
+        List<Row> playerRows = new ArrayList<>();
         for (Row row : joueurTable) {
             Object refObj = row.get("Ref");
             if (refObj != null && ((Number)refObj).intValue() > 1) { // Skip EXEMPT player (Ref=1)
-                Map<String, Object> player = PlayerConverter.convertRowToJson(row);
-                if (player != null) {
-                    players.add(player);
-                }
+                playerRows.add(row);
+            }
+        }
+        
+        // Sort players by their Ref field to ensure consistent ordering
+        playerRows.sort((row1, row2) -> {
+            int ref1 = ((Number)row1.get("Ref")).intValue();
+            int ref2 = ((Number)row2.get("Ref")).intValue();
+            return Integer.compare(ref1, ref2);
+        });
+        
+        // Step 2: Create mapping from PAPI Ref to JSON index (0-based)
+        Map<Integer, Integer> papiRefToJsonIndex = new HashMap<>();
+        for (int i = 0; i < playerRows.size(); i++) {
+            Object refObj = playerRows.get(i).get("Ref");
+            if (refObj != null) {
+                int papiRef = ((Number)refObj).intValue();
+                papiRefToJsonIndex.put(papiRef, i);
+            }
+        }
+        
+        // Step 3: Convert sorted rows to JSON with proper opponent mapping
+        List<Map<String, Object>> players = new ArrayList<>();
+        for (Row row : playerRows) {
+            Map<String, Object> player = PlayerConverter.convertRowToJsonWithMapping(row, papiRefToJsonIndex);
+            if (player != null) {
+                players.add(player);
             }
         }
         
