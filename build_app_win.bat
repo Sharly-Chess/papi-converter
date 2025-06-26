@@ -17,7 +17,7 @@ mkdir %BUILDDIR%\classes
 mkdir %DISTDIR%\java
 
 echo Compiling Java...
-javac --release 21 -cp %CP% -d %BUILDDIR%\classes %JAVADIR%\PapiConverter.java
+javac --release 21 -cp %CP% -d %BUILDDIR%\classes %JAVADIR%\*.java
 
 echo Extracting dependencies...
 cd /d %BUILDDIR%\classes

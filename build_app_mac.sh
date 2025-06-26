@@ -13,7 +13,7 @@ mkdir -p "$BUILD_DIR/classes" "$DIST_DIR/java"
 
 echo "Compiling Java..."
 CP="$ROOT_DIR/lib/jackcess-4.0.5.jar:$ROOT_DIR/lib/commons-lang3-3.12.0.jar:$ROOT_DIR/lib/commons-logging-1.2.jar:$ROOT_DIR/lib/jackson-core-2.15.2.jar:$ROOT_DIR/lib/jackson-databind-2.15.2.jar:$ROOT_DIR/lib/jackson-annotations-2.15.2.jar"
-javac -cp "$CP" -d "$BUILD_DIR/classes" "$JAVA_DIR/PapiConverter.java"
+javac -cp "$CP" -d "$BUILD_DIR/classes" "$JAVA_DIR"/*.java
 
 echo "Creating runnable JAR..."
 cd "$BUILD_DIR/classes"
