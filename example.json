@@ -1,0 +1,21 @@
+{
+  "variables": {
+    "Nom": "Tournament Example",
+    "Genre": "Swiss",
+    "NbrRondes": "7",
+    "Pairing": "Suisse",
+    "Cadence": "90min+30sec",
+    "ClassElo": "Standard",
+    "EloBase1": "1200",
+    "EloBase2": "2400",
+    "Dep1": "75",
+    "Dep2": "92",
+    "Dep3": "94",
+    "DecomptePoints": "1",
+    "Lieu": "Paris Chess Club",
+    "DateDebut": "2024-01-15",
+    "DateFin": "2024-01-21",
+    "Arbitre": "John Smith",
+    "Homologation": "12345"
+  }
+}
