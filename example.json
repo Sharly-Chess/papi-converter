@@ -20,30 +20,56 @@
   },
   "players": [
     {
-      "lastName": "Dupont",
-      "firstName": "Jean",
+      "lastName": "Aubry",
+      "firstName": "Pascal",
       "gender": "M",
       "birthDate": "15/03/1985",
       "elo": 1850,
       "rapidElo": 1820,
       "federation": "FRA",
       "club": "Paris Chess Club",
-      "email": "jean.dupont@example.com",
-      "rounds": []
+      "email": "pascal.aubrey@sharly-chess.com",
+      "paid": 5,
+      "owed": 10,
+      "comment": "This is a comment",
+      "rounds": [
+        {"color": "B", "opponent": 3, "result": 1},
+        {"color": "B", "opponent": 1, "result": 6}
+      ]
     },
     {
-      "lastName": "Martin",
-      "firstName": "Claire",
-      "gender": "F",
+      "lastName": "Aubry",
+      "firstName": "Youri",
+      "gender": "M",
       "birthDate": "22/08/1990",
       "elo": 1650,
       "federation": "FRA",
       "club": "Lyon Chess Club",
-      "rounds": []
+      "rounds": [
+        {"color": "N", "opponent": 2, "result": 1},
+        {"color": "B", "opponent": 4, "result": 3}
+      ]
     },
     {
-      "lastName": "Johnson",
-      "firstName": "Robert",
+      "lastName": "Plat",
+      "firstName": "Sammy",
+      "gender": "M",
+      "birthDate": "10/12/1978",
+      "elo": 1920,
+      "rapidElo": 1900,
+      "blitzElo": 1850,
+      "federation": "FRA",
+      "club": "London Chess Club",
+      "email": "sammy.plat@sharly-chess.com",
+      "phone": "0123456789",
+      "rounds": [
+        {"color": "B", "opponent": 5, "result": 1},
+        {"color": "N", "opponent": 3, "result": 3}
+      ]
+    },
+    {
+      "lastName": "Armes",
+      "firstName": "Timothy",
       "gender": "M",
       "birthDate": "10/12/1978",
       "elo": 1920,
@@ -51,9 +77,12 @@
       "blitzElo": 1850,
       "federation": "ENG",
       "club": "London Chess Club",
-      "email": "robert.johnson@example.com",
+      "email": "tim.armes@sharly-chess.com",
       "phone": "0123456789",
-      "rounds": []
+      "rounds": [
+        {"color": "N", "opponent": 4, "result": 1},
+        {"color": "F", "result": 7}
+      ]
     }
   ]
 }

@@ -243,6 +243,8 @@ public class PapiConverter {
         setFieldIfExists(rowData, playerNode, "FideCode", "fideCode");
         setFieldIfExists(rowData, playerNode, "FideTitre", "fideTitle");
         setFieldIfExists(rowData, playerNode, "AffType", "licenceType");
+        setFieldIfExists(rowData, playerNode, "InscriptionRegle", "paid");
+        setFieldIfExists(rowData, playerNode, "InscriptionDu", "owed");
 
         // Boolean fields
         if (playerNode.has("checkedIn")) {

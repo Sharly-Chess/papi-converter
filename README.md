@@ -103,11 +103,67 @@ The JSON configuration file should contain a `variables` object with tournament 
     "DateFin": "2024-01-21",
     "Arbitre": "John Smith",
     "Homologation": "12345"
-  }
+  },
+  "players": [
+    {
+      "lastName": "Player surname",
+      "firstName": "Player first name",
+      "gender": "M/F",
+      "birthDate": "DD/MM/YYYY",
+      "elo": 1850,
+      "rapidElo": 1820,
+      "blitzElo": 1800,
+      "federation": "FRA",
+      "club": "Club name",
+      "email": "player@example.com",
+      "phone": "0123456789",
+      "rounds": [
+        {"color": "B", "opponent": 3, "result": 3},
+        {"color": "N", "result": 2}
+      ]
+    }
+  ]
 }
 ```
 
 See `example.json` for a complete example.
+
+### Round Structure
+
+Each player can have up to 24 rounds with the following structure:
+
+- **color**: Player's piece color
+  - `"B"` = Black pieces
+  - `"N"` = White pieces (Note: N for "blanc" in French)
+  - `"R"` = Unplayed
+  - `"F"` = Forfeit
+
+- **opponent**: Reference ID of the opponent player (optional for byes/forfeits)
+
+- **result**: Game result from this player's perspective
+  - `0` = No result/Not played
+  - `1` = Loss
+  - `2` = Draw
+  - `3` = Win
+  - `4` = Forfeit loss
+  - `5` = Double forfeit
+  - `6` = Forfeit win
+  - `7` = Zero point bye
+  - `8` = Half point bye
+  - `9` = Pairing allocated bye
+  - `10` = Full point bye
+  - `11` = Unrated loss
+  - `12` = Unrated draw
+  - `13` = Unrated win
+  - `14` = Rest game
+
+### Important Player Data Notes
+
+- Birth dates must be in `DD/MM/YYYY` format
+- ClubRef is automatically set to 0
+- Phone numbers are limited to 10 characters
+- All unspecified rounds default to color `"R"` and result `0`
+- Player references start from 2 (1 is reserved for EXEMPT)
 
 ## Build Details
 
