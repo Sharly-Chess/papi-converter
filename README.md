@@ -86,23 +86,23 @@ The JSON configuration file should contain a `variables` object with tournament 
 ```json
 {
   "variables": {
-    "Nom": "Tournament Example",
-    "Genre": "Swiss",
-    "NbrRondes": "7",
-    "Pairing": "Suisse",
-    "Cadence": "90min+30sec",
-    "ClassElo": "Standard",
-    "EloBase1": "1200",
-    "EloBase2": "2400",
-    "Dep1": "75",
-    "Dep2": "92",
-    "Dep3": "94",
-    "DecomptePoints": "1",
-    "Lieu": "Paris Chess Club",
-    "DateDebut": "2024-01-15",
-    "DateFin": "2024-01-21",
-    "Arbitre": "John Smith",
-    "Homologation": "12345"
+    "name": "Tournament Example",
+    "type": "Swiss",
+    "rounds": "7",
+    "pairing": "Suisse",
+    "timeControl": "90min+30sec",
+    "ratingClass": "Standard",
+    "tieBreakLowerRatingLimit": "1200",
+    "tieBreakUpperRatingLimit": "2400",
+    "tiebreak1" : "Brésilien",
+    "tiebreak2" : "Performance",
+    "tiebreak3" : "94",
+    "pointSystem": "1",
+    "venue": "Paris Chess Club",
+    "startDate": "2024-01-15",
+    "endDate": "2024-01-21",
+    "arbiter": "John Smith",
+    "homologation": "12345"
   },
   "players": [
     {
@@ -127,6 +127,30 @@ The JSON configuration file should contain a `variables` object with tournament 
 ```
 
 See `example.json` for a complete example.
+
+### Tournament Variables
+
+The converter uses English variable names in JSON and maps them to the corresponding French names in the PAPI database:
+
+| English Name | French Name | Description |
+|-------------|-------------|-------------|
+| `name` | Nom | Tournament name |
+| `type` | Genre | Tournament type (Swiss, Round Robin, etc.) |
+| `rounds` | NbrRondes | Number of rounds |
+| `pairing` | Pairing | Pairing system |
+| `timeControl` | Cadence | Time control |
+| `ratingClass` | ClassElo | Rating classification |
+| `tieBreakLowerRatingLimit` | EloBase1 | Minimum rating |
+| `tieBreakUpperRatingLimit` | EloBase2 | Maximum rating |
+| `tiebreak1` | Dep1 | First tiebreak system |
+| `tiebreak2` | Dep2 | Second tiebreak system |
+| `tiebreak3` | Dep3 | Third tiebreak system |
+| `pointSystem` | DecomptePoints | Point counting system |
+| `venue` | Lieu | Tournament venue |
+| `startDate` | DateDebut | Start date |
+| `endDate` | DateFin | End date |
+| `arbiter` | Arbitre | Chief arbiter |
+| `homologation` | Homologation | Homologation number |
 
 ### Round Structure
 

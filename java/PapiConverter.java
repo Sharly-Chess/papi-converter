@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 
 import com.healthmarketscience.jackcess.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,6 +45,38 @@ public class PapiConverter {
         System.err.println("  MDB to JSON: PapiConverter input.mdb [output.json]");
         System.err.println("");
         System.err.println("If output file is not specified, it will be generated automatically.");
+    }
+    
+    // Create mappings between English and French variable names
+    private static Map<String, String> createEnglishToFrenchMapping() {
+        Map<String, String> mapping = new LinkedHashMap<>();
+        mapping.put("name", "Nom");
+        mapping.put("type", "Genre");
+        mapping.put("rounds", "NbrRondes");
+        mapping.put("pairing", "Pairing");
+        mapping.put("timeControl", "Cadence");
+        mapping.put("ratingClass", "ClassElo");
+        mapping.put("tieBreakLowerRatingLimit", "EloBase1");
+        mapping.put("tieBreakUpperRatingLimit", "EloBase2");
+        mapping.put("tiebreak1", "Dep1");
+        mapping.put("tiebreak2", "Dep2");
+        mapping.put("tiebreak3", "Dep3");
+        mapping.put("pointSystem", "DecomptePoints");
+        mapping.put("venue", "Lieu");
+        mapping.put("startDate", "DateDebut");
+        mapping.put("endDate", "DateFin");
+        mapping.put("arbiter", "Arbitre");
+        mapping.put("homologation", "Homologation");
+        return mapping;
+    }
+    
+    private static Map<String, String> createFrenchToEnglishMapping() {
+        Map<String, String> mapping = new LinkedHashMap<>();
+        Map<String, String> englishToFrench = createEnglishToFrenchMapping();
+        for (Map.Entry<String, String> entry : englishToFrench.entrySet()) {
+            mapping.put(entry.getValue(), entry.getKey());
+        }
+        return mapping;
     }
     
     private static void convertJsonToMdb(String jsonFile, String mdbFile) throws Exception {
@@ -99,27 +132,32 @@ public class PapiConverter {
                     }
                 }
                 
+                // Get English to French mapping
+                Map<String, String> englishToFrench = createEnglishToFrenchMapping();
+                
                 // Update or insert data
                 Iterator<Map.Entry<String, JsonNode>> fields = variablesNode.fields();
                 while (fields.hasNext()) {
                     Map.Entry<String, JsonNode> field = fields.next();
-                    String variable = field.getKey();
+                    String englishVariable = field.getKey();
                     String value = field.getValue().asText();
                     
-                    if (validVariables.contains(variable)) {
-                        Row existingRow = existingRows.get(variable);
+                    // Map English variable name to French
+                    String frenchVariable = englishToFrench.get(englishVariable);
+                    if (frenchVariable != null && validVariables.contains(frenchVariable)) {
+                        Row existingRow = existingRows.get(frenchVariable);
                         if (existingRow != null) {
                             // Overwrite existing row
                             existingRow.put("Value", value);
                             infoTable.updateRow(existingRow);
-                            System.out.println("  Updated: " + variable + " = " + value);
+                            System.out.println("  Updated: " + englishVariable + " (" + frenchVariable + ") = " + value);
                         } else {
                             // Add new row
-                            infoTable.addRow(variable, value);
-                            System.out.println("  Added: " + variable + " = " + value);
+                            infoTable.addRow(frenchVariable, value);
+                            System.out.println("  Added: " + englishVariable + " (" + frenchVariable + ") = " + value);
                         }
                     } else {
-                        System.out.println("  Warning: Skipping invalid variable: " + variable);
+                        System.out.println("  Warning: Skipping invalid variable: " + englishVariable);
                     }
                 }
             } else {
@@ -185,7 +223,7 @@ public class PapiConverter {
             // Read tournament variables from INFO table
             System.out.println("Reading tournament variables...");
             Table infoTable = db.getTable("INFO");
-            Map<String, String> variables = new HashMap<>();
+            Map<String, String> variables = new LinkedHashMap<>();
             
             // Define important variables to extract
             List<String> importantVariables = Arrays.asList(
@@ -194,14 +232,24 @@ public class PapiConverter {
                 "Lieu", "DateDebut", "DateFin", "Arbitre", "Homologation"
             );
             
+            // Get French to English mapping
+            Map<String, String> frenchToEnglish = createFrenchToEnglishMapping();
+            
             for (Row row : infoTable) {
                 Object variableObj = row.get("Variable");
                 Object valueObj = row.get("Value");
                 
                 if (variableObj != null && valueObj != null) {
-                    String varName = variableObj.toString();
-                    if (importantVariables.contains(varName)) {
-                        variables.put(varName, valueObj.toString());
+                    String frenchVarName = variableObj.toString();
+                    if (importantVariables.contains(frenchVarName)) {
+                        // Map French variable name to English
+                        String englishVarName = frenchToEnglish.get(frenchVarName);
+                        if (englishVarName != null) {
+                            variables.put(englishVarName, valueObj.toString());
+                        } else {
+                            // Fallback to French name if no mapping exists
+                            variables.put(frenchVarName, valueObj.toString());
+                        }
                     }
                 }
             }
