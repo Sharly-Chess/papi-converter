@@ -79,9 +79,19 @@ public class PlayerDbConverter {
         // Open Access database
         Database accessDb = DatabaseBuilder.open(new File(inputFile));
         
-        // Create SQLite connection
+        // Create SQLite connection with optimizations
         String sqliteUrl = "jdbc:sqlite:" + outputFile;
         Connection sqliteConn = DriverManager.getConnection(sqliteUrl);
+        
+        // Optimize SQLite for bulk inserts (before disabling auto-commit)
+        Statement optimizeStmt = sqliteConn.createStatement();
+        optimizeStmt.execute("PRAGMA synchronous = OFF"); // Faster writes
+        optimizeStmt.execute("PRAGMA journal_mode = MEMORY"); // Use memory journal
+        optimizeStmt.execute("PRAGMA temp_store = MEMORY"); // Use memory for temp tables
+        optimizeStmt.close();
+        
+        // Now disable auto-commit for batching
+        sqliteConn.setAutoCommit(false);
         
         try {
             // Create SQLite table
@@ -141,9 +151,10 @@ public class PlayerDbConverter {
             PreparedStatement insertStmt = sqliteConn.prepareStatement(insertSql);
             
             int playerCount = 0;
-            System.out.println("\nConverting players (limited to 100 for testing)...");
+            int batchSize = 1000; // Process in batches of 1000
+            System.out.println("\nConverting players with batch processing (batch size: " + batchSize + ")...");
             
-            // Process each player row (limit to 100 for testing)
+            // Process each player row with batch processing
             for (Row row : playerTable) {
                 try {
                     // Get club information from ClubRef
@@ -182,10 +193,14 @@ public class PlayerDbConverter {
                     String birthDate = getDateAsString(row, "NeLe");
                     insertStmt.setObject(19, birthDate); // date_of_birth
                     
-                    insertStmt.executeUpdate();
+                    // Add to batch instead of executing immediately
+                    insertStmt.addBatch();
                     playerCount++;
                     
-                    if (playerCount % 1000 == 0) {
+                    // Execute batch when it reaches the batch size
+                    if (playerCount % batchSize == 0) {
+                        insertStmt.executeBatch();
+                        sqliteConn.commit(); // Commit the batch
                         System.out.println("  Converted " + playerCount + " players...");
                     }
                     
@@ -194,6 +209,12 @@ public class PlayerDbConverter {
                     e.printStackTrace();
                     // Continue with next player
                 }
+            }
+            
+            // Execute any remaining batch items
+            if (playerCount % batchSize != 0) {
+                insertStmt.executeBatch();
+                sqliteConn.commit();
             }
             
             System.out.println("\\nConversion completed successfully!");
