@@ -179,7 +179,7 @@ public class PlayerDbConverter {
                     insertStmt.setInt(18, getRatingType(row.get("BlitzFide"))); // blitz_rating_type
                     
                     // Handle birth date
-                    Integer birthDate = getDateAsInteger(row, "NeLe");
+                    String birthDate = getDateAsString(row, "NeLe");
                     insertStmt.setObject(19, birthDate); // date_of_birth
                     
                     insertStmt.executeUpdate();
@@ -329,18 +329,22 @@ public class PlayerDbConverter {
     }
     
     /**
-     * Gets date value as Unix timestamp (seconds since epoch) from row.
-     * Handles both Java Date objects and ISO date strings (YYYY-MM-DD).
+     * Gets date value as YYYY-MM-DD string from row to match ffe.db format.
+     * Handles LocalDateTime objects from Access database.
      */
-    private static Integer getDateAsInteger(Row row, String columnName) {
+    private static String getDateAsString(Row row, String columnName) {
         try {
             Object value = row.get(columnName);
             if (value != null) {
                 if (value instanceof LocalDateTime) {
                     LocalDateTime localDateTime = (LocalDateTime) value;
+                    // Convert to YYYY-MM-DD string format (like Python's date() does)
+                    return localDateTime.toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
+
                     // Convert to Unix timestamp (seconds since epoch)
-                    long epochSeconds = localDateTime.atZone(ZoneId.of("UTC")).toEpochSecond();
-                    return (int) epochSeconds;
+                    // long epochSeconds = localDateTime.atZone(ZoneId.of("UTC")).toEpochSecond();
+                    // return (int) epochSeconds;
+
                 }
             }
         } catch (Exception e) {
