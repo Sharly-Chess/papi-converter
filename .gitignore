@@ -3,3 +3,6 @@
 build/*
 dist/*
 lib/*
+jre-mac/*
+jre-win/*
+

@@ -26,5 +26,16 @@ powershell -Command "Invoke-WebRequest -Uri 'https://repo1.maven.org/maven2/com/
 echo Downloading Jackson Annotations...
 powershell -Command "Invoke-WebRequest -Uri 'https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/2.15.2/jackson-annotations-2.15.2.jar' -OutFile 'lib\jackson-annotations-2.15.2.jar'"
 
+:: Download SQLite JDBC driver
+echo Downloading SQLite JDBC driver...
+powershell -Command "Invoke-WebRequest -Uri 'https://repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.44.1.0/sqlite-jdbc-3.44.1.0.jar' -OutFile 'lib\sqlite-jdbc-3.44.1.0.jar'"
+
+:: Download SLF4J logging libraries
+echo Downloading SLF4J API...
+powershell -Command "Invoke-WebRequest -Uri 'https://repo1.maven.org/maven2/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar' -OutFile 'lib\slf4j-api-2.0.9.jar'"
+
+echo Downloading SLF4J Simple...
+powershell -Command "Invoke-WebRequest -Uri 'https://repo1.maven.org/maven2/org/slf4j/slf4j-simple/2.0.9/slf4j-simple-2.0.9.jar' -OutFile 'lib\slf4j-simple-2.0.9.jar'"
+
 echo Dependencies downloaded successfully!
 echo You can now run: build_app_win.bat

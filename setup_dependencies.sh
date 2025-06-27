@@ -26,5 +26,16 @@ curl -L -o lib/jackson-databind-2.15.2.jar "https://repo1.maven.org/maven2/com/f
 echo "Downloading Jackson Annotations..."
 curl -L -o lib/jackson-annotations-2.15.2.jar "https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/2.15.2/jackson-annotations-2.15.2.jar"
 
+# Download SQLite JDBC driver
+echo "Downloading SQLite JDBC driver..."
+curl -L -o lib/sqlite-jdbc-3.44.1.0.jar "https://repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.44.1.0/sqlite-jdbc-3.44.1.0.jar"
+
+# Download SLF4J logging libraries
+echo "Downloading SLF4J API..."
+curl -L -o lib/slf4j-api-2.0.9.jar "https://repo1.maven.org/maven2/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar"
+
+echo "Downloading SLF4J Simple..."
+curl -L -o lib/slf4j-simple-2.0.9.jar "https://repo1.maven.org/maven2/org/slf4j/slf4j-simple/2.0.9/slf4j-simple-2.0.9.jar"
+
 echo "Dependencies downloaded successfully!"
 echo "You can now run: ./build_app_mac.sh"
