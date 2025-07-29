@@ -57,7 +57,18 @@ public class PapiToJsonConverter {
         
         // Convert to JSON and write to file
         ObjectMapper mapper = new ObjectMapper();
-        mapper.writerWithDefaultPrettyPrinter().writeValue(new File(jsonFile), jsonData);
+
+        // Create parent directories if they don't exist
+        File outputFile = new File(jsonFile);
+        File parentDir = outputFile.getParentFile();
+        if (parentDir != null && !parentDir.exists()) {
+            if (!parentDir.mkdirs()) {
+                throw new Exception("Failed to create directory: " + parentDir.getAbsolutePath());
+            }
+            System.out.println("Created directory: " + parentDir.getAbsolutePath());
+        }
+
+        mapper.writerWithDefaultPrettyPrinter().writeValue(outputFile, jsonData);
         
         System.out.println("Output JSON file: " + jsonFile);
         System.out.println("JSON conversion completed successfully!");

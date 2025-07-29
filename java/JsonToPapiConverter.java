@@ -45,6 +45,17 @@ public class JsonToPapiConverter {
         
         // Copy template to output location
         System.out.println("Copying template file: " + templateFile);
+        
+        // Create parent directories if they don't exist
+        File outputFile = new File(mdbFile);
+        File parentDir = outputFile.getParentFile();
+        if (parentDir != null && !parentDir.exists()) {
+            if (!parentDir.mkdirs()) {
+                throw new Exception("Failed to create directory: " + parentDir.getAbsolutePath());
+            }
+            System.out.println("Created directory: " + parentDir.getAbsolutePath());
+        }
+        
         Files.copy(Paths.get(templateFile), Paths.get(mdbFile), StandardCopyOption.REPLACE_EXISTING);
         
         // Open the copied MDB file

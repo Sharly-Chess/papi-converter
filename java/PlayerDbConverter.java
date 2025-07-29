@@ -70,8 +70,16 @@ public class PlayerDbConverter {
         // Load SQLite JDBC driver explicitly
         Class.forName("org.sqlite.JDBC");
         
-        // Delete existing output file
+        // Create parent directories if they don't exist and delete existing output file
         File outFile = new File(outputFile);
+        File parentDir = outFile.getParentFile();
+        if (parentDir != null && !parentDir.exists()) {
+            if (!parentDir.mkdirs()) {
+                throw new Exception("Failed to create directory: " + parentDir.getAbsolutePath());
+            }
+            System.out.println("Created directory: " + parentDir.getAbsolutePath());
+        }
+        
         if (outFile.exists()) {
             outFile.delete();
         }
