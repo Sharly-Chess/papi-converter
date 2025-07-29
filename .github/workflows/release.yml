@@ -33,6 +33,9 @@ jobs:
     - name: Build application
       run: ./build_app_mac.sh
       
+    - name: Clean JRE directory
+      run: rm -rf jre-mac
+      
     - name: Create JRE
       run: ./build_jre_mac.sh
       
@@ -70,6 +73,10 @@ jobs:
       
     - name: Build application
       run: .\build_app_win.bat
+      shell: cmd
+      
+    - name: Clean JRE directory
+      run: if exist jre-win rmdir /s /q jre-win
       shell: cmd
       
     - name: Create JRE
