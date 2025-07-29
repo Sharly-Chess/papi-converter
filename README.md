@@ -74,7 +74,7 @@ papi-converter.bat tournament.json tournament.papi
 ./papi-converter.sh tournament.json
 ```
 
-### Convert PAPI to JSON (in development)
+### Convert PAPI to JSON
 ```bash
 ./papi-converter.sh tournament.papi tournament.json
 ```
