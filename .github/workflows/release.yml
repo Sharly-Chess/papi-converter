@@ -90,8 +90,8 @@ jobs:
     - name: Package distribution
       run: |
         mkdir release\papi-converter-windows
-        xcopy dist release\papi-converter-windows\ /E /I
-        if exist jre-win xcopy jre-win release\papi-converter-windows\ /E /I
+        xcopy dist release\papi-converter-windows\dist\ /E /I
+        if exist jre-win xcopy jre-win release\papi-converter-windows\jre-win\ /E /I
         copy papi-converter.bat release\papi-converter-windows\
         cd release && 7z a papi-converter-windows.zip papi-converter-windows
       shell: cmd
