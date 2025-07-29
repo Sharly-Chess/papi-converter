@@ -47,7 +47,7 @@ jobs:
       run: |
         mkdir -p release/papi-converter-mac
         cp -r dist/* release/papi-converter-mac/
-        cp -r jre-mac release/papi-converter-mac/jre || true
+        cp -r jre-mac release/papi-converter-mac/ || true
         cp papi-converter.sh release/papi-converter-mac/
         chmod +x release/papi-converter-mac/papi-converter.sh
         cd release && tar -czf papi-converter-mac.tar.gz papi-converter-mac
@@ -91,7 +91,7 @@ jobs:
       run: |
         mkdir release\papi-converter-windows
         xcopy dist\* release\papi-converter-windows\ /E /I
-        if exist jre-win xcopy jre-win release\papi-converter-windows\jre\ /E /I
+        if exist jre-win xcopy jre-win release\papi-converter-windows\ /E /I
         copy papi-converter.bat release\papi-converter-windows\
         cd release && 7z a papi-converter-windows.zip papi-converter-windows
       shell: cmd
