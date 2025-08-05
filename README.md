@@ -5,7 +5,8 @@ A Java utility to convert between JSON configuration files and PAPI (.mdb) tourn
 ## Features
 
 - **JSON to PAPI**: Convert JSON tournament configuration files to PAPI database format
-- **PAPI to JSON**: Convert PAPI database files to JSON format (in development)
+- **PAPI to JSON**: Convert PAPI database files to JSON format
+- **Data.mdb to SQLite**: Convert teh FFE player database files to SQLite format
 - **Cross-platform**: Works on macOS, Linux, and Windows
 - **Self-contained**: Includes minimal JRE runtime for easy distribution
 
@@ -19,16 +20,19 @@ A Java utility to convert between JSON configuration files and PAPI (.mdb) tourn
 ### macOS/Linux
 
 1. **Download dependencies:**
+
    ```bash
    ./setup_dependencies.sh
    ```
 
 2. **Build the application:**
+
    ```bash
    ./build_app_mac.sh
    ```
 
 3. **Create minimal JRE (optional):**
+
    ```bash
    ./build_jre_mac.sh
    ```
@@ -41,16 +45,19 @@ A Java utility to convert between JSON configuration files and PAPI (.mdb) tourn
 ### Windows
 
 1. **Download dependencies:**
+
    ```cmd
    setup_dependencies.bat
    ```
 
 2. **Build the application:**
+
    ```cmd
    build_app_win.bat
    ```
 
 3. **Create minimal JRE (you only need to do this once):**
+
    ```cmd
    build_jre_win.bat
    ```
@@ -63,6 +70,7 @@ A Java utility to convert between JSON configuration files and PAPI (.mdb) tourn
 ## Usage
 
 ### Convert JSON to PAPI
+
 ```bash
 # Using shell script (macOS/Linux)
 ./papi-converter.sh tournament.json tournament.papi
@@ -75,6 +83,7 @@ papi-converter.bat tournament.json tournament.papi
 ```
 
 ### Convert PAPI to JSON
+
 ```bash
 ./papi-converter.sh tournament.papi tournament.json
 ```
@@ -92,11 +101,11 @@ The JSON configuration file should contain a `variables` object with tournament 
     "pairing": "Suisse",
     "timeControl": "90min+30sec",
     "ratingClass": "Standard",
-    "tieBreakLowerRatingLimit": "1200",
-    "tieBreakUpperRatingLimit": "2400",
-    "tiebreak1" : "Brésilien",
-    "tiebreak2" : "Performance",
-    "tiebreak3" : "94",
+    "minRating": "1200",
+    "maxRating": "2400",
+    "tiebreak1": "Brésilien",
+    "tiebreak2": "Performance",
+    "tiebreak3": "94",
     "pointSystem": "1",
     "venue": "Paris Chess Club",
     "startDate": "2024-01-15",
@@ -118,8 +127,8 @@ The JSON configuration file should contain a `variables` object with tournament 
       "email": "player@example.com",
       "phone": "0123456789",
       "rounds": [
-        {"color": "B", "opponent": 3, "result": 3},
-        {"color": "N", "result": 2}
+        { "color": "B", "opponent": 3, "result": 3 },
+        { "color": "N", "result": 2 }
       ]
     }
   ]
@@ -132,31 +141,32 @@ See `example.json` for a complete example.
 
 The converter uses English variable names in JSON and maps them to the corresponding French names in the PAPI database:
 
-| English Name | French Name | Description |
-|-------------|-------------|-------------|
-| `name` | Nom | Tournament name |
-| `type` | Genre | Tournament type (Swiss, Round Robin, etc.) |
-| `rounds` | NbrRondes | Number of rounds |
-| `pairing` | Pairing | Pairing system |
-| `timeControl` | Cadence | Time control |
-| `ratingClass` | ClassElo | Rating classification |
-| `tieBreakLowerRatingLimit` | EloBase1 | Minimum rating |
-| `tieBreakUpperRatingLimit` | EloBase2 | Maximum rating |
-| `tiebreak1` | Dep1 | First tiebreak system |
-| `tiebreak2` | Dep2 | Second tiebreak system |
-| `tiebreak3` | Dep3 | Third tiebreak system |
-| `pointSystem` | DecomptePoints | Point counting system |
-| `venue` | Lieu | Tournament venue |
-| `startDate` | DateDebut | Start date |
-| `endDate` | DateFin | End date |
-| `arbiter` | Arbitre | Chief arbiter |
-| `homologation` | Homologation | Homologation number |
+| English Name               | French Name    | Description                                |
+| -------------------------- | -------------- | ------------------------------------------ |
+| `name`                     | Nom            | Tournament name                            |
+| `type`                     | Genre          | Tournament type (Swiss, Round Robin, etc.) |
+| `rounds`                   | NbrRondes      | Number of rounds                           |
+| `pairing`                  | Pairing        | Pairing system                             |
+| `timeControl`              | Cadence        | Time control                               |
+| `ratingClass`              | ClassElo       | Rating classification                      |
+| `tieBreakLowerRatingLimit` | EloBase1       | Minimum rating                             |
+| `tieBreakUpperRatingLimit` | EloBase2       | Maximum rating                             |
+| `tiebreak1`                | Dep1           | First tiebreak system                      |
+| `tiebreak2`                | Dep2           | Second tiebreak system                     |
+| `tiebreak3`                | Dep3           | Third tiebreak system                      |
+| `pointSystem`              | DecomptePoints | Point counting system                      |
+| `venue`                    | Lieu           | Tournament venue                           |
+| `startDate`                | DateDebut      | Start date                                 |
+| `endDate`                  | DateFin        | End date                                   |
+| `arbiter`                  | Arbitre        | Chief arbiter                              |
+| `homologation`             | Homologation   | Homologation number                        |
 
 ### Round Structure
 
 Each player can have up to 24 rounds with the following structure:
 
 - **color**: Player's piece color
+
   - `"B"` = Black pieces
   - `"N"` = White pieces (Note: N for "blanc" in French)
   - `"R"` = Unplayed
@@ -188,12 +198,13 @@ When a player receives a bye (forfeit win), you can simply specify `"result": 6`
 ```json
 {
   "rounds": [
-    {"color": "B", "result": 6}  // Automatically plays against EXEMPT player
+    { "color": "B", "result": 6 } // Automatically plays against EXEMPT player
   ]
 }
 ```
 
 The converter will automatically:
+
 - Set the opponent to player 1 (EXEMPT)
 - Update the EXEMPT player's record to show they played as Black with result 0
 - Create proper pairing records in both directions
@@ -211,6 +222,7 @@ The converter will automatically:
 ### Dependencies
 
 The application uses the following libraries:
+
 - **Jackcess 4.0.5**: For reading/writing Microsoft Access (.mdb) files
 - **Apache Commons Lang 3.12.0**: Utility functions
 - **Apache Commons Logging 1.2**: Logging framework
