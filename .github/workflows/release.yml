@@ -30,21 +30,24 @@ jobs:
           chmod +x setup_dependencies.sh
           chmod +x build_app_mac.sh
 
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: lib
-          key: ${{ runner.os }}-dependencies-${{ hashFiles('setup_dependencies.sh') }}
-          restore-keys: |
-            ${{ runner.os }}-dependencies-
-
       - name: Setup dependencies
         run: |
-          if [ ! -f "lib/sqlite-jdbc-3.44.1.0.jar" ]; then
-            echo "Dependencies not found in cache, downloading..."
-            ./setup_dependencies.sh
+          echo "Setting up fresh dependencies with H2 database..."
+          rm -rf lib
+          ./setup_dependencies.sh
+          echo "Verifying dependencies:"
+          ls -la lib/
+          if [ -f "lib/h2-2.2.224.jar" ]; then
+            echo "✓ H2 database jar found"
           else
-            echo "Dependencies found in cache, skipping download"
+            echo "✗ H2 database jar not found"
+            exit 1
+          fi
+          if ls lib/sqlite-jdbc-*.jar 1> /dev/null 2>&1; then
+            echo "✗ Found SQLite JDBC jar - this should not happen"
+            exit 1
+          else
+            echo "✓ No SQLite JDBC jars found (as expected)"
           fi
 
       - name: Build native application

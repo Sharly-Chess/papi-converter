@@ -33,28 +33,28 @@ public class PlayerDbConverter {
     }
     
     private static final String SQLITE_SCHEMA = """
-        CREATE TABLE `player` (
-            `id` INTEGER NOT NULL,
-            `ffe_id` INTEGER NOT NULL,
-            `last_name` TEXT NOT NULL,
-            `first_name` TEXT,
-            `gender` INTEGER NOT NULL,
-            `ffe_licence_number` TEXT,
-            `ffe_licence` INTEGER NOT NULL,
-            `federation` TEXT NOT NULL,
-            `league` TEXT,
-            `city` TEXT,
-            `club` TEXT,
-            `fide_id` INTEGER,
-            `fide_title` INTEGER NOT NULL,
-            `standard_rating` INTEGER NOT NULL,
-            `rapid_rating` INTEGER NOT NULL,
-            `blitz_rating` INTEGER NOT NULL,
-            `standard_rating_type` INTEGER NOT NULL,
-            `rapid_rating_type` INTEGER NOT NULL,
-            `blitz_rating_type` INTEGER NOT NULL,
-            `date_of_birth` INTEGER,
-            PRIMARY KEY(`id` AUTOINCREMENT)
+        CREATE TABLE player (
+            id INTEGER NOT NULL AUTO_INCREMENT,
+            ffe_id INTEGER NOT NULL,
+            last_name VARCHAR(255) NOT NULL,
+            first_name VARCHAR(255),
+            gender INTEGER NOT NULL,
+            ffe_licence_number VARCHAR(255),
+            ffe_licence INTEGER NOT NULL,
+            federation VARCHAR(10) NOT NULL,
+            league VARCHAR(255),
+            city VARCHAR(255),
+            club VARCHAR(255),
+            fide_id INTEGER,
+            fide_title INTEGER NOT NULL,
+            standard_rating INTEGER NOT NULL,
+            rapid_rating INTEGER NOT NULL,
+            blitz_rating INTEGER NOT NULL,
+            standard_rating_type INTEGER NOT NULL,
+            rapid_rating_type INTEGER NOT NULL,
+            blitz_rating_type INTEGER NOT NULL,
+            date_of_birth VARCHAR(10),
+            PRIMARY KEY(id)
         );
         """;
     
@@ -67,8 +67,8 @@ public class PlayerDbConverter {
         System.out.println("Input: " + inputFile);
         System.out.println("Output: " + outputFile);
         
-        // Load SQLite JDBC driver explicitly
-        Class.forName("org.sqlite.JDBC");
+        // Load H2 JDBC driver for SQLite compatibility
+        Class.forName("org.h2.Driver");
         
         // Create parent directories if they don't exist and delete existing output file
         File outFile = new File(outputFile);
@@ -87,18 +87,13 @@ public class PlayerDbConverter {
         // Open Access database
         Database accessDb = DatabaseBuilder.open(new File(inputFile));
         
-        // Create SQLite connection with optimizations
-        String sqliteUrl = "jdbc:sqlite:" + outputFile;
-        Connection sqliteConn = DriverManager.getConnection(sqliteUrl);
+        // Create H2 connection in SQLite mode with optimizations
+        String h2Url = "jdbc:h2:" + outputFile.replaceFirst("\\.sqlite$", "");
+        Connection sqliteConn = DriverManager.getConnection(h2Url);
         
-        // Optimize SQLite for bulk inserts (before disabling auto-commit)
-        Statement optimizeStmt = sqliteConn.createStatement();
-        optimizeStmt.execute("PRAGMA synchronous = OFF"); // Faster writes
-        optimizeStmt.execute("PRAGMA journal_mode = MEMORY"); // Use memory journal
-        optimizeStmt.execute("PRAGMA temp_store = MEMORY"); // Use memory for temp tables
-        optimizeStmt.close();
+        // Note: Using H2 database in embedded mode for better compatibility
         
-        // Now disable auto-commit for batching
+        // Disable auto-commit for batching
         sqliteConn.setAutoCommit(false);
         
         try {

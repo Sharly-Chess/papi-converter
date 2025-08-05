@@ -8,7 +8,7 @@ set DISTDIR=%ROOTDIR%\dist
 set JAVADIR=%ROOTDIR%\java
 
 :: classpath for libraries
-set CP=%ROOTDIR%\lib\jackcess-4.0.5.jar;%ROOTDIR%\lib\commons-lang3-3.12.0.jar;%ROOTDIR%\lib\commons-logging-1.2.jar;%ROOTDIR%\lib\jackson-core-2.15.2.jar;%ROOTDIR%\lib\jackson-databind-2.15.2.jar;%ROOTDIR%\lib\jackson-annotations-2.15.2.jar;%ROOTDIR%\lib\sqlite-jdbc-3.44.1.0.jar;%ROOTDIR%\lib\slf4j-api-2.0.9.jar;%ROOTDIR%\lib\slf4j-simple-2.0.9.jar
+set CP=%ROOTDIR%\lib\jackcess-4.0.5.jar;%ROOTDIR%\lib\commons-lang3-3.12.0.jar;%ROOTDIR%\lib\commons-logging-1.2.jar;%ROOTDIR%\lib\jackson-core-2.15.2.jar;%ROOTDIR%\lib\jackson-databind-2.15.2.jar;%ROOTDIR%\lib\jackson-annotations-2.15.2.jar;%ROOTDIR%\lib\h2-2.2.224.jar;%ROOTDIR%\lib\slf4j-api-2.0.9.jar;%ROOTDIR%\lib\slf4j-simple-2.0.9.jar
 
 echo Cleaning previous build...
 rmdir /s /q %BUILDDIR%
@@ -27,7 +27,7 @@ jar xf %ROOTDIR%\lib\commons-logging-1.2.jar
 jar xf %ROOTDIR%\lib\jackson-core-2.15.2.jar
 jar xf %ROOTDIR%\lib\jackson-databind-2.15.2.jar
 jar xf %ROOTDIR%\lib\jackson-annotations-2.15.2.jar
-jar xf %ROOTDIR%\lib\sqlite-jdbc-3.44.1.0.jar
+jar xf %ROOTDIR%\lib\h2-2.2.224.jar
 jar xf %ROOTDIR%\lib\slf4j-api-2.0.9.jar
 jar xf %ROOTDIR%\lib\slf4j-simple-2.0.9.jar
 

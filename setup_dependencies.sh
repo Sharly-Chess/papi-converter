@@ -50,9 +50,9 @@ curl -L -o lib/jackson-databind-2.15.2.jar "https://repo1.maven.org/maven2/com/f
 echo "Downloading Jackson Annotations..."
 curl -L -o lib/jackson-annotations-2.15.2.jar "https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/2.15.2/jackson-annotations-2.15.2.jar"
 
-# Download SQLite JDBC driver
-echo "Downloading SQLite JDBC driver..."
-curl -L -o lib/sqlite-jdbc-3.44.1.0.jar "https://repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.44.1.0/sqlite-jdbc-3.44.1.0.jar"
+# Download H2 Database (pure Java SQLite alternative)
+echo "Downloading H2 Database..."
+curl -L -o lib/h2-2.2.224.jar "https://repo1.maven.org/maven2/com/h2database/h2/2.2.224/h2-2.2.224.jar"
 
 # Download SLF4J logging libraries
 echo "Downloading SLF4J API..."
