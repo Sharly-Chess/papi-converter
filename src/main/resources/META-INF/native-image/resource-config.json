@@ -4,10 +4,9 @@
       {"pattern": "com/healthmarketscience/jackcess/.*\\.txt"},
       {"pattern": ".*\\.properties"},
       {"pattern": ".*\\.json"},
-      {"pattern": "org/sqlite/native/.*"}
+      {"pattern": "org/sqlite/native/.*"},
+      {"pattern": "org/sqlite/native/Mac/aarch64/.*"},
+      {"pattern": "org/sqlite/native/Mac/x86_64/.*"}
     ]
-  },
-  "bundles": [
-    {"name": "org.sqlite.native.Mac.aarch64.libsqlitejdbc"}
-  ]
+  }
 }

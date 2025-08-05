@@ -37,13 +37,19 @@ jar cfe "$ROOT_DIR/papiconverter.jar" org.sharlychess.papiconverter.PapiConverte
 # Build native image
 echo "Building native binary..."
 cd "$ROOT_DIR"
-native-image --no-fallback --initialize-at-build-time=org.sqlite.util.ProcessRunner \
+native-image --no-fallback \
+  --initialize-at-build-time=org.sqlite.util.ProcessRunner \
+  --initialize-at-run-time=org.sqlite.SQLiteJDBCLoader \
   -H:+UnlockExperimentalVMOptions \
   -H:ReflectionConfigurationFiles=src/main/resources/META-INF/native-image/reflect-config.json \
   -H:ResourceConfigurationFiles=src/main/resources/META-INF/native-image/resource-config.json \
   -H:IncludeResources='org/sqlite/native/.*' \
+  -H:IncludeResources='org/sqlite/native/Mac/aarch64/.*' \
+  -H:IncludeResources='org/sqlite/native/Mac/x86_64/.*' \
   -H:+JNI \
+  -H:+AllowVMInspection \
   --enable-url-protocols=http,https \
+  --allow-incomplete-classpath \
   -cp "$ROOT_DIR/papiconverter.jar:$LIB_CLASSPATH" org.sharlychess.papiconverter.PapiConverter "$DIST_DIR/papi-converter"
 
 # Clean up intermediate files
