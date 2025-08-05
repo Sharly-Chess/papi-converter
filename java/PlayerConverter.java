@@ -110,60 +110,21 @@ public class PlayerConverter {
         
         // Round results (up to 24 rounds)
         JsonNode roundsNode = playerNode.get("rounds");
-        if (roundsNode != null && roundsNode.isArray()) {
-            int roundNum = 1;
-            for (JsonNode roundNode : roundsNode) {
-                if (roundNum > 24) break; // Maximum 24 rounds
+        if (roundsNode != null) {
+            var fields = roundsNode.fields();
+            while (fields.hasNext()) {
+                var entry = fields.next();
+                String roundNumStr = entry.getKey();
+                JsonNode roundNode = entry.getValue();
                 
-                String roundStr = String.format("%02d", roundNum);
-                
-                // Color (Cl) - B/N/R/F
-                if (roundNode.has("color")) {
-                    rowData.put("Rd" + roundStr + "Cl", roundNode.get("color").asText());
-                }
-                
-                // Get result first to check for bye
-                int result = 0;
-                if (roundNode.has("result")) {
-                    result = roundNode.get("result").asInt();
-                    rowData.put("Rd" + roundStr + "Res", result);
-                }
-                
-                // Opponent (Adv) - opponent player reference
-                if (roundNode.has("opponent")) {
-                    int jsonOpponent = roundNode.get("opponent").asInt();
-                    if (jsonOpponent >= 0) {
-                        // Convert JSON opponent reference to PAPI reference
-                        int papiOpponent = jsonRefToPapiRef(jsonOpponent);
-                        rowData.put("Rd" + roundStr + "Adv", papiOpponent);
+                try {
+                    int roundNum = Integer.parseInt(roundNumStr);
+                    if (roundNum >= 1 && roundNum <= 24) {
+                        processRoundData(rowData, roundNode, roundNum, playerRef, playerTable);
                     }
-                } else if (result == 6) {
-                    // Auto-detect bye: result 6 without opponent means bye against EXEMPT (player 1)
-                    rowData.put("Rd" + roundStr + "Adv", 1);
-                    System.out.println("    Auto-detected bye for player " + papiRefToJsonRef(playerRef) + " in round " + roundNum + " (vs EXEMPT)");
-
-                    // Find the EXEMPT player (Ref=1)
-                    Row exemptRow = null;
-                    for (Row row : playerTable) {
-                        Object refObj = row.get("Ref");
-                        if (refObj != null && ((Number)refObj).intValue() == 1) {
-                            exemptRow = row;
-                            break;
-                        }
-                    }
-        
-                    if (exemptRow != null) {
-                        // Now set the new values
-                        exemptRow.put("Rd" + roundStr + "Cl", "N");
-                        exemptRow.put("Rd" + roundStr + "Adv", playerRef);
-                        exemptRow.put("Rd" + roundStr + "Res", 0);
-                        
-                        // Update the EXEMPT row in the table
-                        playerTable.updateRow(exemptRow);
-                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("  Warning: Invalid round number '" + roundNumStr + "' for player " + playerRef);
                 }
-                
-                roundNum++;
             }
         }
         
@@ -238,8 +199,8 @@ public class PlayerConverter {
         addFieldIfNotNull(player, "email", row.get("EMail"));
         addFieldIfNotNull(player, "comment", row.get("Commentaire"));
         
-        // Round results
-        List<Map<String, Object>> rounds = new ArrayList<>();
+        // Round results - using dictionary with round number as key
+        Map<String, Map<String, Object>> rounds = new HashMap<>();
         for (int roundNum = 1; roundNum <= 24; roundNum++) {
             String roundStr = String.format("%02d", roundNum);
             
@@ -278,8 +239,8 @@ public class PlayerConverter {
                     round.put("result", resultObj);
                 }
                 
-                // Always add round to list if we get here (has non-default values)
-                rounds.add(round);
+                // Add round to dictionary with round number as key
+                rounds.put(String.valueOf(roundNum), round);
             }
         }
         
@@ -288,6 +249,59 @@ public class PlayerConverter {
         }
         
         return player;
+    }
+    
+    /**
+     * Helper method to process round data for both array and dictionary formats.
+     */
+    private static void processRoundData(Map<String, Object> rowData, JsonNode roundNode, int roundNum, int playerRef, Table playerTable) throws Exception {
+        String roundStr = String.format("%02d", roundNum);
+        
+        // Color (Cl) - B/N/R/F
+        if (roundNode.has("color")) {
+            rowData.put("Rd" + roundStr + "Cl", roundNode.get("color").asText());
+        }
+        
+        // Get result first to check for bye
+        int result = 0;
+        if (roundNode.has("result")) {
+            result = roundNode.get("result").asInt();
+            rowData.put("Rd" + roundStr + "Res", result);
+        }
+        
+        // Opponent (Adv) - opponent player reference
+        if (roundNode.has("opponent")) {
+            int jsonOpponent = roundNode.get("opponent").asInt();
+            if (jsonOpponent >= 0) {
+                // Convert JSON opponent reference to PAPI reference
+                int papiOpponent = jsonRefToPapiRef(jsonOpponent);
+                rowData.put("Rd" + roundStr + "Adv", papiOpponent);
+            }
+        } else if (result == 6) {
+            // Auto-detect bye: result 6 without opponent means bye against EXEMPT (player 1)
+            rowData.put("Rd" + roundStr + "Adv", 1);
+            System.out.println("    Auto-detected bye for player " + papiRefToJsonRef(playerRef) + " in round " + roundNum + " (vs EXEMPT)");
+
+            // Find the EXEMPT player (Ref=1)
+            Row exemptRow = null;
+            for (Row row : playerTable) {
+                Object refObj = row.get("Ref");
+                if (refObj != null && ((Number)refObj).intValue() == 1) {
+                    exemptRow = row;
+                    break;
+                }
+            }
+
+            if (exemptRow != null) {
+                // Now set the new values
+                exemptRow.put("Rd" + roundStr + "Cl", "N");
+                exemptRow.put("Rd" + roundStr + "Adv", playerRef);
+                exemptRow.put("Rd" + roundStr + "Res", 0);
+                
+                // Update the EXEMPT row in the table
+                playerTable.updateRow(exemptRow);
+            }
+        }
     }
     
     /**

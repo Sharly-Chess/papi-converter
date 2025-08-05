@@ -157,6 +157,24 @@ The converter uses English variable names in JSON and maps them to the correspon
 
 ### Round Structure
 
+**Note**: Starting from version 2.0, rounds are represented as a dictionary/object where the key is the round number (as a string) and the value contains the round data. This ensures that byes and forfeits are correctly associated with their actual round numbers.
+
+**New Dictionary Format (Recommended)**:
+```json
+"rounds": {
+  "1": {"color": "B", "opponent": 3, "result": 3},
+  "3": {"color": "N", "result": 2}
+}
+```
+
+**Legacy Array Format (Still Supported)**:
+```json
+"rounds": [
+  {"color": "B", "opponent": 3, "result": 3},
+  {"color": "N", "result": 2}
+]
+```
+
 Each player can have up to 24 rounds with the following structure:
 
 - **color**: Player's piece color
