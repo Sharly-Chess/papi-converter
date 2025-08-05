@@ -6,7 +6,7 @@ A Java utility to convert between JSON configuration files and PAPI (.mdb) tourn
 
 - **JSON to PAPI**: Convert JSON tournament configuration files to PAPI database format
 - **PAPI to JSON**: Convert PAPI database files to JSON format
-- **Data.mdb to SQLite**: Convert teh FFE player database files to SQLite format
+- **Data.mdb to sql dump**: Convert the FFE player database files to an DQLite dump format
 - **Cross-platform**: Works on macOS, Linux, and Windows
 - **Native Image**: Compiled to OS-native binary using GraalVM
 
@@ -160,6 +160,7 @@ The converter uses English variable names in JSON and maps them to the correspon
 **Note**: Starting from version 2.0, rounds are represented as a dictionary/object where the key is the round number (as a string) and the value contains the round data. This ensures that byes and forfeits are correctly associated with their actual round numbers.
 
 **New Dictionary Format (Recommended)**:
+
 ```json
 "rounds": {
   "1": {"color": "B", "opponent": 3, "result": 3},
@@ -168,6 +169,7 @@ The converter uses English variable names in JSON and maps them to the correspon
 ```
 
 **Legacy Array Format (Still Supported)**:
+
 ```json
 "rounds": [
   {"color": "B", "opponent": 3, "result": 3},

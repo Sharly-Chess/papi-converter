@@ -1,7 +1,7 @@
 package org.sharlychess.papiconverter;
 
 import java.sql.*;
-import java.io.File;
+import java.io.*;
 import java.util.Date;
 import java.util.Map;
 import java.util.HashMap;
@@ -9,6 +9,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import com.healthmarketscience.jackcess.*;
 
 /**
@@ -32,7 +34,7 @@ public class PlayerDbConverter {
         }
     }
     
-    private static final String SQLITE_SCHEMA = """
+    private static final String H2_SCHEMA = """
         CREATE TABLE player (
             id INTEGER NOT NULL AUTO_INCREMENT,
             ffe_id INTEGER NOT NULL,
@@ -58,9 +60,34 @@ public class PlayerDbConverter {
         );
         """;
     
+    private static final String SQLITE_SCHEMA = """
+        CREATE TABLE player (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ffe_id INTEGER NOT NULL,
+            last_name VARCHAR(255) NOT NULL,
+            first_name VARCHAR(255),
+            gender INTEGER NOT NULL,
+            ffe_licence_number VARCHAR(255),
+            ffe_licence INTEGER NOT NULL,
+            federation VARCHAR(10) NOT NULL,
+            league VARCHAR(255),
+            city VARCHAR(255),
+            club VARCHAR(255),
+            fide_id INTEGER,
+            fide_title INTEGER NOT NULL,
+            standard_rating INTEGER NOT NULL,
+            rapid_rating INTEGER NOT NULL,
+            blitz_rating INTEGER NOT NULL,
+            standard_rating_type INTEGER NOT NULL,
+            rapid_rating_type INTEGER NOT NULL,
+            blitz_rating_type INTEGER NOT NULL,
+            date_of_birth VARCHAR(10)
+        );
+        """;
+    
     public static void convert(String inputFile, String outputFile) throws Exception {
         if (outputFile == null) {
-            outputFile = inputFile.replaceFirst("\\.[^.]+$", ".sqlite");
+            outputFile = inputFile.replaceFirst("\\.[^.]+$", ".sql");
         }
         
         System.out.println("Converting Access player database to SQLite...");
@@ -87,19 +114,20 @@ public class PlayerDbConverter {
         // Open Access database
         Database accessDb = DatabaseBuilder.open(new File(inputFile));
         
-        // Create H2 connection in SQLite mode with optimizations
-        String h2Url = "jdbc:h2:" + outputFile.replaceFirst("\\.sqlite$", "");
-        Connection sqliteConn = DriverManager.getConnection(h2Url);
+        // Create temporary H2 database for processing
+        String tempDbName = outputFile.replaceFirst("\\.sqlite$", "") + "_temp";
+        String h2Url = "jdbc:h2:" + tempDbName;
+        Connection h2Conn = DriverManager.getConnection(h2Url);
         
-        // Note: Using H2 database in embedded mode for better compatibility
+        // Note: Using H2 database temporarily, will export to SQLite format
         
         // Disable auto-commit for batching
-        sqliteConn.setAutoCommit(false);
+        h2Conn.setAutoCommit(false);
         
         try {
-            // Create SQLite table
-            Statement stmt = sqliteConn.createStatement();
-            stmt.execute(SQLITE_SCHEMA);
+            // Create H2 table
+            Statement stmt = h2Conn.createStatement();
+            stmt.execute(H2_SCHEMA);
             
             // Get the JOUEUR and CLUB tables
             Table playerTable = accessDb.getTable("JOUEUR");
@@ -151,7 +179,7 @@ public class PlayerDbConverter {
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
             
-            PreparedStatement insertStmt = sqliteConn.prepareStatement(insertSql);
+            PreparedStatement insertStmt = h2Conn.prepareStatement(insertSql);
             
             int playerCount = 0;
             int batchSize = 1000; // Process in batches of 1000
@@ -203,7 +231,7 @@ public class PlayerDbConverter {
                     // Execute batch when it reaches the batch size
                     if (playerCount % batchSize == 0) {
                         insertStmt.executeBatch();
-                        sqliteConn.commit(); // Commit the batch
+                        h2Conn.commit(); // Commit the batch
                         System.out.println("  Converted " + playerCount + " players...");
                     }
                     
@@ -217,15 +245,22 @@ public class PlayerDbConverter {
             // Execute any remaining batch items
             if (playerCount % batchSize != 0) {
                 insertStmt.executeBatch();
-                sqliteConn.commit();
+                h2Conn.commit();
             }
             
-            System.out.println("\\nConversion completed successfully!");
+            System.out.println("\nH2 conversion completed successfully!");
             System.out.println("Total players converted: " + playerCount);
+            
+            // Export H2 data to SQL format
+            System.out.println("\nExporting to SQL format...");
+            exportToSQL(h2Conn, outputFile);
             
         } finally {
             accessDb.close();
-            sqliteConn.close();
+            h2Conn.close();
+            
+            // Clean up temporary H2 files
+            cleanupTempFiles(tempDbName);
         }
     }
     
@@ -375,5 +410,129 @@ public class PlayerDbConverter {
             System.err.println("Error processing date for column " + columnName + ": " + e.getMessage());
         }
         return null;
+    }
+    
+    /**
+     * Exports H2 database data to a SQL file.
+     * Creates a minimal SQLite-compatible output without external dependencies.
+     */
+    private static void exportToSQL(Connection h2Conn, String outputFile) throws Exception {
+        System.out.println("Exporting H2 data to SQL format...");
+
+        try (PrintWriter writer = new PrintWriter(new FileWriter(outputFile))) {
+            // Write SQLite-compatible header
+            writer.println("-- SQLite-compatible database dump");
+            writer.println("-- Generated by PAPI Converter (Pure Java)");
+            writer.println();
+            writer.println("PRAGMA foreign_keys=OFF;");
+            writer.println("BEGIN TRANSACTION;");
+            writer.println();
+
+            // Write SQLite schema
+            writer.println(SQLITE_SCHEMA);
+            writer.println();
+
+            // Export data in batches to avoid memory issues
+            Statement stmt = h2Conn.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM player");
+            rs.next();
+            int totalRecords = rs.getInt(1);
+            rs.close();
+
+            System.out.println("Exporting " + totalRecords + " records...");
+
+            // Process in smaller batches
+            int batchSize = 10000;
+            int offset = 0;
+            int exportedCount = 0;
+
+            while (offset < totalRecords) {
+                String query = "SELECT * FROM player ORDER BY id LIMIT " + batchSize + " OFFSET " + offset;
+                ResultSet batchRs = stmt.executeQuery(query);
+
+                while (batchRs.next()) {
+                    writer.print("INSERT INTO player VALUES (");
+                    writer.print(batchRs.getInt("id") + ",");
+                    writer.print(batchRs.getInt("ffe_id") + ",");
+                    writer.print("'" + escapeSQL(batchRs.getString("last_name")) + "',");
+                    writer.print("'" + escapeSQL(batchRs.getString("first_name")) + "',");
+                    writer.print(batchRs.getInt("gender") + ",");
+                    writer.print("'" + escapeSQL(batchRs.getString("ffe_licence_number")) + "',");
+                    writer.print(batchRs.getInt("ffe_licence") + ",");
+                    writer.print("'" + escapeSQL(batchRs.getString("federation")) + "',");
+                    writer.print("'" + escapeSQL(batchRs.getString("league")) + "',");
+                    writer.print("'" + escapeSQL(batchRs.getString("city")) + "',");
+                    writer.print("'" + escapeSQL(batchRs.getString("club")) + "',");
+
+                    Object fideId = batchRs.getObject("fide_id");
+                    if (fideId != null) {
+                        writer.print(fideId + ",");
+                    } else {
+                        writer.print("NULL,");
+                    }
+
+                    writer.print(batchRs.getInt("fide_title") + ",");
+                    writer.print(batchRs.getInt("standard_rating") + ",");
+                    writer.print(batchRs.getInt("rapid_rating") + ",");
+                    writer.print(batchRs.getInt("blitz_rating") + ",");
+                    writer.print(batchRs.getInt("standard_rating_type") + ",");
+                    writer.print(batchRs.getInt("rapid_rating_type") + ",");
+                    writer.print(batchRs.getInt("blitz_rating_type") + ",");
+
+                    String dateOfBirth = batchRs.getString("date_of_birth");
+                    if (dateOfBirth != null) {
+                        writer.print("'" + escapeSQL(dateOfBirth) + "'");
+                    } else {
+                        writer.print("NULL");
+                    }
+
+                    writer.println(");");
+                    exportedCount++;
+                }
+
+                batchRs.close();
+                offset += batchSize;
+
+                // Progress update
+                if (exportedCount > 0 && exportedCount % 50000 == 0) {
+                    System.out.println("  Exported " + exportedCount + " records...");
+                }
+            }
+
+            writer.println();
+            writer.println("COMMIT;");
+
+            stmt.close();
+        }
+
+        System.out.println("SQL dump completed: " + outputFile);
+        System.out.println("Exported records successfully.");
+    }
+    
+    
+    /**
+     * Escapes SQL string values.
+     */
+    private static String escapeSQL(String value) {
+        if (value == null) return "";
+        return value.replace("'", "''");
+    }
+    
+    /**
+     * Cleans up temporary H2 database files.
+     */
+    private static void cleanupTempFiles(String tempDbName) {
+        try {
+            // H2 creates several files
+            String[] extensions = {".mv.db", ".trace.db"};
+            for (String ext : extensions) {
+                File tempFile = new File(tempDbName + ext);
+                if (tempFile.exists()) {
+                    tempFile.delete();
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Warning: Could not clean up temporary files: " + e.getMessage());
+        }
     }
 }
