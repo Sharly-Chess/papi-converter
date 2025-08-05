@@ -1,0 +1,13 @@
+{
+  "resources": {
+    "includes": [
+      {"pattern": "com/healthmarketscience/jackcess/.*\\.txt"},
+      {"pattern": ".*\\.properties"},
+      {"pattern": ".*\\.json"},
+      {"pattern": "org/sqlite/native/.*"}
+    ]
+  },
+  "bundles": [
+    {"name": "org.sqlite.native.Mac.aarch64.libsqlitejdbc"}
+  ]
+}

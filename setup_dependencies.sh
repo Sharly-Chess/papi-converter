@@ -3,6 +3,30 @@ set -e
 
 echo "Setting up PAPI Converter dependencies..."
 
+# Verify Homebrew installation
+if ! command -v brew &>/dev/null; then
+  echo "Homebrew is not installed. Installing Homebrew..."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+
+# Install GraalVM
+echo "Installing GraalVM..."
+if ! brew list --cask graalvm-jdk22 &>/dev/null; then
+  brew tap graalvm/tap
+  brew install --cask graalvm-jdk22
+else
+  echo "GraalVM JDK 22 is already installed."
+fi
+
+# Set environment variables for this session
+export JAVA_HOME="/Library/Java/JavaVirtualMachines/graalvm-jdk-22/Contents/Home"
+export PATH="$JAVA_HOME/bin:$PATH"
+
+echo "GraalVM installed at: $JAVA_HOME"
+echo "Note: Add the following to your shell profile (~/.zshrc or ~/.bash_profile):"
+echo "export JAVA_HOME=\"/Library/Java/JavaVirtualMachines/graalvm-jdk-22/Contents/Home\""
+echo "export PATH=\"\$JAVA_HOME/bin:\$PATH\""
+
 # Create lib directory
 mkdir -p lib
 

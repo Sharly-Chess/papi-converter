@@ -8,12 +8,12 @@ A Java utility to convert between JSON configuration files and PAPI (.mdb) tourn
 - **PAPI to JSON**: Convert PAPI database files to JSON format
 - **Data.mdb to SQLite**: Convert teh FFE player database files to SQLite format
 - **Cross-platform**: Works on macOS, Linux, and Windows
-- **Self-contained**: Includes minimal JRE runtime for easy distribution
+- **Native Image**: Compiled to OS-native binary using GraalVM
 
 ## Requirements
 
-- Java 21 or higher (for building)
-- Internet connection (for downloading dependencies)
+- GraalVM Setup
+- Internet connection (for downloading dependencies and dependencies)
 
 ## Quick Start
 
@@ -31,15 +31,9 @@ A Java utility to convert between JSON configuration files and PAPI (.mdb) tourn
    ./build_app_mac.sh
    ```
 
-3. **Create minimal JRE (optional):**
-
+3. **Run the converter:**
    ```bash
-   ./build_jre_mac.sh
-   ```
-
-4. **Run the converter:**
-   ```bash
-   ./papi-converter.sh input.json [output.papi]
+   ./dist/papi-converter-native input.json [output.papi]
    ```
 
 ### Windows
@@ -64,7 +58,7 @@ A Java utility to convert between JSON configuration files and PAPI (.mdb) tourn
 
 4. **Run the converter:**
    ```cmd
-   papi-converter.bat input.json [output.papi]
+   .\dist\papi-converter-native.exe input.json [output.papi]
    ```
 
 ## Usage
@@ -72,20 +66,20 @@ A Java utility to convert between JSON configuration files and PAPI (.mdb) tourn
 ### Convert JSON to PAPI
 
 ```bash
-# Using shell script (macOS/Linux)
-./papi-converter.sh tournament.json tournament.papi
+# macOS/Linux
+./dist/papi-converter-native tournament.json tournament.papi
 
-# Using batch file (Windows)
-papi-converter.bat tournament.json tournament.papi
+# Windows
+.\dist\papi-converter-native.exe tournament.json tournament.papi
 
 # Auto-generate output filename
-./papi-converter.sh tournament.json
+./dist/papi-converter-native tournament.json
 ```
 
 ### Convert PAPI to JSON
 
 ```bash
-./papi-converter.sh tournament.papi tournament.json
+./dist/papi-converter-native tournament.papi tournament.json
 ```
 
 ## JSON Format

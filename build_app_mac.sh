@@ -7,31 +7,47 @@ BUILD_DIR="$ROOT_DIR/build"
 DIST_DIR="$ROOT_DIR/dist"
 JAVA_DIR="$ROOT_DIR/java"
 
+export JAVA_HOME="/Library/Java/JavaVirtualMachines/graalvm-jdk-22/Contents/Home"
+export PATH="$JAVA_HOME/bin:$PATH"
+
+# Clean previous build artifacts
 echo "Cleaning previous build..."
 rm -rf "$BUILD_DIR" "$DIST_DIR"
-mkdir -p "$BUILD_DIR/classes" "$DIST_DIR/java"
+mkdir -p "$BUILD_DIR" "$DIST_DIR"
 
+# Build classpath from lib directory
+LIB_CLASSPATH=""
+for jar in lib/*.jar; do
+  if [ -z "$LIB_CLASSPATH" ]; then
+    LIB_CLASSPATH="$jar"
+  else
+    LIB_CLASSPATH="$LIB_CLASSPATH:$jar"
+  fi
+done
+
+# Compile Java source code
 echo "Compiling Java..."
-CP="$ROOT_DIR/lib/jackcess-4.0.5.jar:$ROOT_DIR/lib/commons-lang3-3.12.0.jar:$ROOT_DIR/lib/commons-logging-1.2.jar:$ROOT_DIR/lib/jackson-core-2.15.2.jar:$ROOT_DIR/lib/jackson-databind-2.15.2.jar:$ROOT_DIR/lib/jackson-annotations-2.15.2.jar:$ROOT_DIR/lib/sqlite-jdbc-3.44.1.0.jar:$ROOT_DIR/lib/slf4j-api-2.0.9.jar:$ROOT_DIR/lib/slf4j-simple-2.0.9.jar"
-javac -cp "$CP" -d "$BUILD_DIR/classes" "$JAVA_DIR"/*.java
+javac -cp "$LIB_CLASSPATH" -d "$BUILD_DIR" java/*.java
 
-echo "Creating runnable JAR..."
-cd "$BUILD_DIR/classes"
+# Create a new JAR file with compiled classes
+echo "Creating JAR..."
+cd "$BUILD_DIR"
+jar cfe "$ROOT_DIR/papiconverter.jar" org.sharlychess.papiconverter.PapiConverter .
 
-# Extract dependencies into build directory
-jar xf "$ROOT_DIR/lib/jackcess-4.0.5.jar"
-jar xf "$ROOT_DIR/lib/commons-lang3-3.12.0.jar"
-jar xf "$ROOT_DIR/lib/commons-logging-1.2.jar"
-jar xf "$ROOT_DIR/lib/jackson-core-2.15.2.jar"
-jar xf "$ROOT_DIR/lib/jackson-databind-2.15.2.jar"
-jar xf "$ROOT_DIR/lib/jackson-annotations-2.15.2.jar"
-jar xf "$ROOT_DIR/lib/sqlite-jdbc-3.44.1.0.jar"
-jar xf "$ROOT_DIR/lib/slf4j-api-2.0.9.jar"
-jar xf "$ROOT_DIR/lib/slf4j-simple-2.0.9.jar"
-
-# Remove META-INF to avoid conflicts
-rm -rf META-INF
-
-# Create fat JAR with all dependencies
-jar cfe "$DIST_DIR/java/papiconverter.jar" org.sharlychess.papiconverter.PapiConverter .
+# Build native image
+echo "Building native binary..."
 cd "$ROOT_DIR"
+native-image --no-fallback --initialize-at-build-time=org.sqlite.util.ProcessRunner \
+  -H:+UnlockExperimentalVMOptions \
+  -H:ReflectionConfigurationFiles=src/main/resources/META-INF/native-image/reflect-config.json \
+  -H:ResourceConfigurationFiles=src/main/resources/META-INF/native-image/resource-config.json \
+  -H:IncludeResources='org/sqlite/native/.*' \
+  -H:+JNI \
+  --enable-url-protocols=http,https \
+  -cp "$ROOT_DIR/papiconverter.jar:$LIB_CLASSPATH" org.sharlychess.papiconverter.PapiConverter "$DIST_DIR/papi-converter"
+
+# Clean up intermediate files
+rm "$ROOT_DIR/papiconverter.jar"
+cd "$ROOT_DIR"
+
+echo "Build completed successfully! Binary is located at $DIST_DIR/papi-converter"

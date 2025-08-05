@@ -3,7 +3,7 @@ name: Build and Release
 on:
   push:
     tags:
-      - '*'
+      - "*"
   workflow_dispatch:
 
 permissions:
@@ -13,122 +13,132 @@ permissions:
 jobs:
   build-mac:
     runs-on: macos-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-        
-    - name: Make scripts executable
-      run: |
-        chmod +x setup_dependencies.sh
-        chmod +x build_app_mac.sh
-        chmod +x build_jre_mac.sh
-        chmod +x papi-converter.sh
-        
-    - name: Setup dependencies
-      run: ./setup_dependencies.sh
-      
-    - name: Build application
-      run: ./build_app_mac.sh
-      
-    - name: Clean JRE directory
-      run: rm -rf jre-mac
-      
-    - name: Create JRE
-      run: ./build_jre_mac.sh
-      
-    - name: Package distribution
-      run: |
-        mkdir -p release/papi-converter-mac
-        cp -r dist release/papi-converter-mac/
-        cp -r jre-mac release/papi-converter-mac/ || true
-        cp -r static release/papi-converter-mac/
-        cp papi-converter.sh release/papi-converter-mac/
-        chmod +x release/papi-converter-mac/papi-converter.sh
-        cd release && tar -czf papi-converter-mac.tar.gz papi-converter-mac
-        
-    - name: Upload Mac artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: papi-converter-mac
-        path: release/papi-converter-mac.tar.gz
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: "22"
+          distribution: "graalvm"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Make scripts executable
+        run: |
+          chmod +x setup_dependencies.sh
+          chmod +x build_app_mac.sh
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: lib
+          key: ${{ runner.os }}-dependencies-${{ hashFiles('setup_dependencies.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-dependencies-
+
+      - name: Setup dependencies
+        run: |
+          if [ ! -f "lib/sqlite-jdbc-3.44.1.0.jar" ]; then
+            echo "Dependencies not found in cache, downloading..."
+            ./setup_dependencies.sh
+          else
+            echo "Dependencies found in cache, skipping download"
+          fi
+
+      - name: Build native application
+        run: ./build_app_mac.sh
+
+      - name: Verify build
+        run: |
+          ls -la dist/
+          file dist/papi-converter
+          ./dist/papi-converter --help || true
+
+      - name: Package distribution
+        run: |
+          mkdir -p release/papi-converter-mac
+          cp dist/papi-converter release/papi-converter-mac/
+          cp -r static release/papi-converter-mac/
+          chmod +x release/papi-converter-mac/papi-converter
+          cd release && tar -czf papi-converter-mac.tar.gz papi-converter-mac
+
+      - name: Upload Mac artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: papi-converter-mac
+          path: release/papi-converter-mac.tar.gz
 
   build-windows:
     runs-on: windows-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-        
-    - name: Setup dependencies
-      run: .\setup_dependencies.bat
-      shell: cmd
-      
-    - name: Build application
-      run: .\build_app_win.bat
-      shell: cmd
-      
-    - name: Clean JRE directory
-      run: if exist jre-win rmdir /s /q jre-win
-      shell: cmd
-      
-    - name: Create JRE
-      run: .\build_jre_win.bat
-      shell: cmd
-      
-    - name: Package distribution
-      run: |
-        mkdir release\papi-converter-windows
-        xcopy dist release\papi-converter-windows\dist\ /E /I
-        if exist jre-win xcopy jre-win release\papi-converter-windows\jre-win\ /E /I
-        xcopy static release\papi-converter-windows\static\ /E /I
-        copy papi-converter.bat release\papi-converter-windows\
-        cd release && 7z a papi-converter-windows.zip papi-converter-windows
-      shell: cmd
-      
-    - name: Upload Windows artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: papi-converter-windows
-        path: release/papi-converter-windows.zip
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Setup dependencies
+        run: .\setup_dependencies.bat
+        shell: cmd
+
+      - name: Build application
+        run: .\build_app_win.bat
+        shell: cmd
+
+      - name: Clean JRE directory
+        run: if exist jre-win rmdir /s /q jre-win
+        shell: cmd
+
+      - name: Create JRE
+        run: .\build_jre_win.bat
+        shell: cmd
+
+      - name: Package distribution
+        run: |
+          mkdir release\papi-converter-windows
+          xcopy dist release\papi-converter-windows\dist\ /E /I
+          if exist jre-win xcopy jre-win release\papi-converter-windows\jre-win\ /E /I
+          xcopy static release\papi-converter-windows\static\ /E /I
+          copy papi-converter.bat release\papi-converter-windows\
+          cd release && 7z a papi-converter-windows.zip papi-converter-windows
+        shell: cmd
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: papi-converter-windows
+          path: release/papi-converter-windows.zip
 
   release:
     runs-on: ubuntu-latest
     needs: [build-mac, build-windows]
     if: startsWith(github.ref, 'refs/tags/')
-    
-    steps:
-    - name: Download Mac artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: papi-converter-mac
-        
-    - name: Download Windows artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: papi-converter-windows
-        
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          papi-converter-mac.tar.gz
-          papi-converter-windows.zip
-        draft: false
-        prerelease: false
-        generate_release_notes: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+    steps:
+      - name: Download Mac artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: papi-converter-mac
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: papi-converter-windows
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            papi-converter-mac.tar.gz
+            papi-converter-windows.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
