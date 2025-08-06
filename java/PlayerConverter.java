@@ -160,11 +160,16 @@ public class PlayerConverter {
         addFieldIfNotNull(player, "firstName", row.get("Prenom"));
         addFieldIfNotNull(player, "gender", row.get("Sexe"));
         
-        // Birth date - convert from Date to DD/MM/YYYY format
+        // Birth date - convert from Date or LocalDateTime to DD/MM/YYYY format
         Object birthDateObj = row.get("NeLe");
         if (birthDateObj instanceof java.util.Date) {
             java.util.Date date = (java.util.Date) birthDateObj;
             java.time.LocalDate localDate = date.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            player.put("birthDate", localDate.format(formatter));
+        } else if (birthDateObj instanceof java.time.LocalDateTime) {
+            java.time.LocalDateTime localDateTime = (java.time.LocalDateTime) birthDateObj;
+            java.time.LocalDate localDate = localDateTime.toLocalDate();
             java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
             player.put("birthDate", localDate.format(formatter));
         }
