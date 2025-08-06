@@ -6,3 +6,5 @@ lib/*
 jre-mac/*
 jre-win/*
 
+
+run_dev.sh
