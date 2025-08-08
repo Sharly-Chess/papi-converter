@@ -37,3 +37,6 @@ rmdir /s /q META-INF
 echo Creating fat JAR...
 jar cfe %DISTDIR%\java\papiconverter.jar org.sharlychess.papiconverter.PapiConverter .
 cd /d %ROOTDIR%
+
+echo Copying static resources...
+xcopy /E /I %ROOTDIR%\static %DISTDIR%\static

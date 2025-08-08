@@ -46,6 +46,9 @@ echo "Creating fat JAR..."
 jar cfe "$DIST_DIR/java/papiconverter.jar" org.sharlychess.papiconverter.PapiConverter .
 cd "$ROOT_DIR"
 
+echo "Copying static resources..."
+cp -r "$ROOT_DIR/static" "$DIST_DIR/java/"
+
 # Create a simple run script for convenience
 cat > run_dev.sh << 'EOF'
 #!/bin/bash

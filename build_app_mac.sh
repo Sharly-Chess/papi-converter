@@ -49,4 +49,8 @@ native-image --no-fallback \
 rm "$ROOT_DIR/papiconverter.jar"
 cd "$ROOT_DIR"
 
+# Copy static resources to distribution
+echo "Copying static resources..."
+cp -r "$ROOT_DIR/static" "$DIST_DIR/"
+
 echo "Build completed successfully! Binary is located at $DIST_DIR/papi-converter"

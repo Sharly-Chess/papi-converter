@@ -1,6 +1,7 @@
 package org.sharlychess.papiconverter;
 
 import java.io.File;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -37,10 +38,11 @@ public class JsonToPapiConverter {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode rootNode = mapper.readTree(jsonContent);
         
-        // Check for template file
-        String templateFile = "static/template-3.3.8.papi";
-        if (!Files.exists(Paths.get(templateFile))) {
-            throw new Exception("Template file not found: " + templateFile);
+        // Check for template file - make path relative to executable location
+        String executableDir = getExecutableDirectory();
+        String templateFile = findTemplateFile(executableDir);
+        if (templateFile == null) {
+            throw new Exception("Template file not found. Searched in: " + executableDir + "/static/ and parent directories");
         }
         
         // Copy template to output location
@@ -74,6 +76,74 @@ public class JsonToPapiConverter {
         
         System.out.println("Output MDB file: " + mdbFile);
         System.out.println("MDB conversion completed successfully!");
+    }
+    
+    /**
+     * Gets the directory where the JAR/executable is located.
+     * @return The directory path of the JAR/executable
+     */
+    private static String getExecutableDirectory() {
+        try {
+            // Get the location of the current class
+            URI jarUri = JsonToPapiConverter.class.getProtectionDomain()
+                .getCodeSource().getLocation().toURI();
+            
+            // Normalize the path to handle different platforms and URI schemes
+            String jarPath;
+            if ("file".equals(jarUri.getScheme())) {
+                jarPath = Paths.get(jarUri).toString();
+            } else {
+                jarPath = jarUri.getPath();
+            }
+            
+            File jarFile = new File(jarPath);
+            if (jarFile.isFile()) {
+                // This is a JAR file - return the directory containing the JAR
+                return jarFile.getParent();
+            } else {
+                // This might be a directory (development scenario)
+                return jarPath;
+            }
+        } catch (Exception e) {
+            // Fallback to current working directory if we can't determine executable location
+            System.err.println("Warning: Could not determine executable directory, using current directory: " + e.getMessage());
+            return System.getProperty("user.dir");
+        }
+    }
+    
+    /**
+     * Finds the template file by searching in different possible locations.
+     * This handles different distribution structures:
+     * - Development/Mac: static folder next to JAR/executable
+     * - Windows: JAR in dist/java/, static folder at distribution root
+     * 
+     * @param executableDir The directory where the JAR/executable is located
+     * @return The full path to the template file, or null if not found
+     */
+    private static String findTemplateFile(String executableDir) {
+        String[] searchPaths = {
+            // First try: static folder next to JAR/executable (development, Mac native)
+            Paths.get(executableDir, "static", "template-3.3.8.papi").toString(),
+            
+            // Second try: go up one level from JAR location (Windows: dist/java -> dist)
+            Paths.get(executableDir).getParent() != null ?
+                Paths.get(executableDir).getParent().resolve("static").resolve("template-3.3.8.papi").toString() : null,
+            
+            // Third try: go up two levels from JAR location (dist/java -> dist -> root)
+            Paths.get(executableDir).getParent() != null && Paths.get(executableDir).getParent().getParent() != null ?
+                Paths.get(executableDir).getParent().getParent().resolve("static").resolve("template-3.3.8.papi").toString() : null,
+            
+            // Fallback: current working directory
+            Paths.get(System.getProperty("user.dir"), "static", "template-3.3.8.papi").toString()
+        };
+        
+        for (String path : searchPaths) {
+            if (path != null && Files.exists(Paths.get(path))) {
+                return path;
+            }
+        }
+        
+        return null;
     }
     
     /**
