@@ -24,7 +24,7 @@ public class JsonToPapiConverter {
      * @throws Exception if conversion fails
      */
     public static void convert(String jsonFile, String mdbFile) throws Exception {
-        System.out.println("Converting JSON to MDB...");
+        VerboseOutput.println("Converting JSON to MDB...");
         
         // Generate output filename if not provided
         if (mdbFile == null) {
@@ -33,7 +33,7 @@ public class JsonToPapiConverter {
         
         // Read and parse JSON content
         String jsonContent = Files.readString(Paths.get(jsonFile));
-        System.out.println("Reading JSON from: " + jsonFile);
+        VerboseOutput.println("Reading JSON from: " + jsonFile);
         
         ObjectMapper mapper = new ObjectMapper();
         JsonNode rootNode = mapper.readTree(jsonContent);
@@ -46,7 +46,7 @@ public class JsonToPapiConverter {
         }
         
         // Copy template to output location
-        System.out.println("Copying template file: " + templateFile);
+        VerboseOutput.println("Copying template file: " + templateFile);
         
         // Create parent directories if they don't exist
         File outputFile = new File(mdbFile);
@@ -55,7 +55,7 @@ public class JsonToPapiConverter {
             if (!parentDir.mkdirs()) {
                 throw new Exception("Failed to create directory: " + parentDir.getAbsolutePath());
             }
-            System.out.println("Created directory: " + parentDir.getAbsolutePath());
+            VerboseOutput.println("Created directory: " + parentDir.getAbsolutePath());
         }
         
         Files.copy(Paths.get(templateFile), Paths.get(mdbFile), StandardCopyOption.REPLACE_EXISTING);
@@ -74,8 +74,8 @@ public class JsonToPapiConverter {
             db.close();
         }
         
-        System.out.println("Output MDB file: " + mdbFile);
-        System.out.println("MDB conversion completed successfully!");
+        VerboseOutput.alwaysPrintln("Output MDB file: " + mdbFile);
+        VerboseOutput.alwaysPrintln("JSON to MDB conversion completed successfully!");
     }
     
     /**
@@ -106,7 +106,7 @@ public class JsonToPapiConverter {
             }
         } catch (Exception e) {
             // Fallback to current working directory if we can't determine executable location
-            System.err.println("Warning: Could not determine executable directory, using current directory: " + e.getMessage());
+            VerboseOutput.errorPrintln("Warning: Could not determine executable directory, using current directory");
             return System.getProperty("user.dir");
         }
     }
@@ -156,7 +156,7 @@ public class JsonToPapiConverter {
         // Get variables from JSON
         JsonNode variablesNode = rootNode.get("variables");
         if (variablesNode != null && variablesNode.isObject()) {
-            System.out.println("Updating INFO table with variables...");
+            VerboseOutput.println("Updating INFO table with variables...");
             
             // Create a map of existing rows for quick lookup
             Map<String, Row> existingRows = new HashMap<>();
@@ -182,18 +182,18 @@ public class JsonToPapiConverter {
                         // Overwrite existing row
                         existingRow.put("Value", value);
                         infoTable.updateRow(existingRow);
-                        System.out.println("  Updated: " + englishVariable + " (" + frenchVariable + ") = " + value);
+                        VerboseOutput.println("  Updated: " + englishVariable + " (" + frenchVariable + ") = " + value);
                     } else {
                         // Add new row
                         infoTable.addRow(frenchVariable, value);
-                        System.out.println("  Added: " + englishVariable + " (" + frenchVariable + ") = " + value);
+                        VerboseOutput.println("  Added: " + englishVariable + " (" + frenchVariable + ") = " + value);
                     }
                 } else {
-                    System.out.println("  Warning: Skipping invalid variable: " + englishVariable);
+                    VerboseOutput.alwaysPrintln("  Warning: Skipping invalid variable: " + englishVariable);
                 }
             }
         } else {
-            System.out.println("No 'variables' object found in JSON");
+            VerboseOutput.println("No 'variables' object found in JSON");
         }
     }
     
@@ -203,7 +203,7 @@ public class JsonToPapiConverter {
     private static void processPlayers(Database db, JsonNode rootNode) throws Exception {
         JsonNode playersNode = rootNode.get("players");
         if (playersNode != null && playersNode.isArray()) {
-            System.out.println("\nProcessing players data...");
+            VerboseOutput.println("\nProcessing players data...");
             Table playerTable = db.getTable("JOUEUR");
             
             // Clear existing players (except EXEMPT which is Ref=1)
@@ -222,9 +222,9 @@ public class JsonToPapiConverter {
                 PlayerConverter.addPlayerToTable(playerTable, playerNode, playerRef++);
             }
             
-            System.out.println("Added " + (playerRef - 2) + " players to JOUEUR table");
+            VerboseOutput.println("Added " + (playerRef - 2) + " players to JOUEUR table");
         } else {
-            System.out.println("No 'players' array found in JSON");
+            VerboseOutput.println("No 'players' array found in JSON");
         }
     }
 }

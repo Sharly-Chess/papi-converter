@@ -67,7 +67,7 @@ public class PlayerConverter {
                     java.util.Date date = java.util.Date.from(localDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
                     rowData.put("NeLe", date);
                 } catch (Exception e) {
-                    System.out.println("  Warning: Invalid birth date format for player " + playerRef + ": " + birthDate + " (expected DD/MM/YYYY)");
+                    VerboseOutput.alwaysPrintln("  Warning: Invalid birth date format for player " + playerRef + ": " + birthDate + " (expected DD/MM/YYYY)");
                 }
             }
         }
@@ -123,7 +123,7 @@ public class PlayerConverter {
                         processRoundData(rowData, roundNode, roundNum, playerRef, playerTable);
                     }
                 } catch (NumberFormatException e) {
-                    System.out.println("  Warning: Invalid round number '" + roundNumStr + "' for player " + playerRef);
+                    VerboseOutput.alwaysPrintln("  Warning: Invalid round number '" + roundNumStr + "' for player " + playerRef);
                 }
             }
         }
@@ -139,7 +139,7 @@ public class PlayerConverter {
         String playerName = playerNode.has("firstName") ? 
             playerNode.get("firstName").asText() + " " + (playerNode.has("lastName") ? playerNode.get("lastName").asText() : "") :
             (playerNode.has("lastName") ? playerNode.get("lastName").asText() : "Player " + playerRef);
-        System.out.println("  Added player: " + playerName.trim() + " (Ref: " + playerRef + ")");
+        VerboseOutput.println("  Added player: " + playerName.trim() + " (Ref: " + playerRef + ")");
     }
     
     /**
@@ -285,7 +285,7 @@ public class PlayerConverter {
         } else if (result == 6) {
             // Auto-detect bye: result 6 without opponent means bye against EXEMPT (player 1)
             rowData.put("Rd" + roundStr + "Adv", 1);
-            System.out.println("    Auto-detected bye for player " + papiRefToJsonRef(playerRef) + " in round " + roundNum + " (vs EXEMPT)");
+            VerboseOutput.println("    Auto-detected bye for player " + papiRefToJsonRef(playerRef) + " in round " + roundNum + " (vs EXEMPT)");
 
             // Find the EXEMPT player (Ref=1)
             Row exemptRow = null;
