@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.JsonNode;
  * Handles conversion of player data between JSON and PAPI database format.
  */
 public class PlayerConverter {
-    
+
     /**
      * Converts JSON player reference (0-based) to PAPI database reference (2-based).
      * JSON: 0, 1, 2, 3... -> PAPI: 2, 3, 4, 5...
@@ -19,7 +19,7 @@ public class PlayerConverter {
     public static int jsonRefToPapiRef(int jsonRef) {
         return jsonRef + 2;
     }
-    
+
     /**
      * Converts PAPI database reference (2-based) to JSON player reference (0-based).
      * PAPI: 2, 3, 4, 5... -> JSON: 0, 1, 2, 3...
@@ -27,7 +27,7 @@ public class PlayerConverter {
     public static int papiRefToJsonRef(int papiRef) {
         return papiRef - 2;
     }
-    
+
     /**
      * Adds a player from JSON to the JOUEUR table.
      * @param playerTable The JOUEUR table
@@ -38,7 +38,7 @@ public class PlayerConverter {
     public static void addPlayerToTable(Table playerTable, JsonNode playerNode, int playerRef) throws Exception {
         // Create new row for player
         Map<String, Object> rowData = new HashMap<>();
-        
+
         // Set player reference
         rowData.put("Ref", playerRef);
         rowData.put("ClubRef", 0); // Always set ClubRef to 0
@@ -48,7 +48,7 @@ public class PlayerConverter {
         rowData.put("InscriptionRegle", 0); // Default InscriptionRegle
         rowData.put("InscriptionDu", 0); // Default InscriptionDu
         rowData.put("AffType", "N");
-        
+
         // Player basic information
         setFieldIfExists(rowData, playerNode, "RefFFE", "refFFE");
         setFieldIfExists(rowData, playerNode, "Nr", "nr");
@@ -56,7 +56,7 @@ public class PlayerConverter {
         setFieldIfExists(rowData, playerNode, "Nom", "lastName");
         setFieldIfExists(rowData, playerNode, "Prenom", "firstName");
         setFieldIfExists(rowData, playerNode, "Sexe", "gender");
-        
+
         // Dates (birth date)
         if (playerNode.has("birthDate")) {
             String birthDate = playerNode.get("birthDate").asText();
@@ -71,7 +71,7 @@ public class PlayerConverter {
                 }
             }
         }
-        
+
         setFieldIfExists(rowData, playerNode, "Cat", "category");
         setFieldIfExists(rowData, playerNode, "Elo", "elo");
         setFieldIfExists(rowData, playerNode, "Rapide", "rapidElo");
@@ -93,21 +93,21 @@ public class PlayerConverter {
         if (playerNode.has("checkedIn")) {
             rowData.put("Pointe", playerNode.get("checkedIn").asBoolean());
         }
-        
+
         // Contact information
-        setFieldIfExists(rowData, playerNode, "Adresse", "address");
-        setFieldIfExists(rowData, playerNode, "CP", "postalCode");
-        setFieldIfExists(rowData, playerNode, "Tel", "phone");
-        setFieldIfExists(rowData, playerNode, "EMail", "email");
-        setFieldIfExists(rowData, playerNode, "Commentaire", "comment");
-        
+        setFieldIfExists(rowData, playerNode, "Adresse", "address", 192);
+        setFieldIfExists(rowData, playerNode, "CP", "postalCode", 72);
+        setFieldIfExists(rowData, playerNode, "Tel", "phone", 10);
+        setFieldIfExists(rowData, playerNode, "EMail", "email", 100);
+        setFieldIfExists(rowData, playerNode, "Commentaire", "comment", 510);
+
         // Initialize all rounds with defaults first
         for (int roundNum = 1; roundNum <= 24; roundNum++) {
             String roundStr = String.format("%02d", roundNum);
             rowData.put("Rd" + roundStr + "Cl", "R"); // Default color: R
             rowData.put("Rd" + roundStr + "Res", 0);   // Default result: 0
         }
-        
+
         // Round results (up to 24 rounds)
         JsonNode roundsNode = playerNode.get("rounds");
         if (roundsNode != null) {
@@ -116,7 +116,7 @@ public class PlayerConverter {
                 var entry = fields.next();
                 String roundNumStr = entry.getKey();
                 JsonNode roundNode = entry.getValue();
-                
+
                 try {
                     int roundNum = Integer.parseInt(roundNumStr);
                     if (roundNum >= 1 && roundNum <= 24) {
@@ -127,7 +127,7 @@ public class PlayerConverter {
                 }
             }
         }
-        
+
         // Add the row to the table using the correct column order
         Object[] rowValues = new Object[playerTable.getColumnCount()];
         for (int i = 0; i < playerTable.getColumnCount(); i++) {
@@ -135,13 +135,13 @@ public class PlayerConverter {
             rowValues[i] = rowData.get(column.getName());
         }
         playerTable.addRow(rowValues);
-        
-        String playerName = playerNode.has("firstName") ? 
+
+        String playerName = playerNode.has("firstName") ?
             playerNode.get("firstName").asText() + " " + (playerNode.has("lastName") ? playerNode.get("lastName").asText() : "") :
             (playerNode.has("lastName") ? playerNode.get("lastName").asText() : "Player " + playerRef);
         VerboseOutput.println("  Added player: " + playerName.trim() + " (Ref: " + playerRef + ")");
     }
-    
+
     /**
      * Converts a database row to JSON player format with reference mapping.
      * @param row The database row
@@ -151,7 +151,7 @@ public class PlayerConverter {
      */
     public static Map<String, Object> convertRowToJsonWithMapping(Row row, Map<Integer, Integer> papiRefToJsonIndexMap) throws Exception {
         Map<String, Object> player = new HashMap<>();
-        
+
         // Basic player information
         addFieldIfNotNull(player, "refFFE", row.get("RefFFE"));
         addFieldIfNotNull(player, "nr", row.get("Nr"));
@@ -159,7 +159,7 @@ public class PlayerConverter {
         addFieldIfNotNull(player, "lastName", row.get("Nom"));
         addFieldIfNotNull(player, "firstName", row.get("Prenom"));
         addFieldIfNotNull(player, "gender", row.get("Sexe"));
-        
+
         // Birth date - convert from Date or LocalDateTime to DD/MM/YYYY format
         Object birthDateObj = row.get("NeLe");
         if (birthDateObj instanceof java.util.Date) {
@@ -173,7 +173,7 @@ public class PlayerConverter {
             java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
             player.put("birthDate", localDate.format(formatter));
         }
-        
+
         addFieldIfNotNull(player, "category", row.get("Cat"));
         addFieldIfNotNull(player, "elo", row.get("Elo"));
         addFieldIfNotNull(player, "rapidElo", row.get("Rapide"));
@@ -196,36 +196,36 @@ public class PlayerConverter {
         if (pointeObj instanceof Boolean) {
             player.put("checkedIn", pointeObj);
         }
-        
+
         // Contact information
         addFieldIfNotNull(player, "address", row.get("Adresse"));
         addFieldIfNotNull(player, "postalCode", row.get("CP"));
         addFieldIfNotNull(player, "phone", row.get("Tel"));
         addFieldIfNotNull(player, "email", row.get("EMail"));
         addFieldIfNotNull(player, "comment", row.get("Commentaire"));
-        
+
         // Round results - using dictionary with round number as key
         Map<String, Map<String, Object>> rounds = new HashMap<>();
         for (int roundNum = 1; roundNum <= 24; roundNum++) {
             String roundStr = String.format("%02d", roundNum);
-            
+
             Object colorObj = row.get("Rd" + roundStr + "Cl");
             Object opponentObj = row.get("Rd" + roundStr + "Adv");
             Object resultObj = row.get("Rd" + roundStr + "Res");
-            
+
             // Only include rounds that have non-default values
             boolean hasColor = colorObj != null && !"R".equals(colorObj.toString());
             boolean hasOpponent = opponentObj != null && ((Number)opponentObj).intValue() > 0;
             boolean hasResult = resultObj != null && ((Number)resultObj).intValue() > 0;
-            
+
             if (hasColor || hasOpponent || hasResult) {
-                
+
                 Map<String, Object> round = new HashMap<>();
-                
+
                 if (colorObj != null && !"R".equals(colorObj.toString())) {
                     round.put("color", colorObj.toString());
                 }
-                
+
                 if (opponentObj != null && !Integer.valueOf(0).equals(opponentObj)) {
                     int papiOpponent = ((Number)opponentObj).intValue();
                     if (papiOpponent > 1) {  // Exclude EXEMPT player (ref 1) from JSON output
@@ -239,41 +239,41 @@ public class PlayerConverter {
                         }
                     }
                 }
-                
+
                 if (resultObj != null && !Integer.valueOf(0).equals(resultObj)) {
                     round.put("result", resultObj);
                 }
-                
+
                 // Add round to dictionary with round number as key
                 rounds.put(String.valueOf(roundNum), round);
             }
         }
-        
+
         if (!rounds.isEmpty()) {
             player.put("rounds", rounds);
         }
-        
+
         return player;
     }
-    
+
     /**
      * Helper method to process round data for both array and dictionary formats.
      */
     private static void processRoundData(Map<String, Object> rowData, JsonNode roundNode, int roundNum, int playerRef, Table playerTable) throws Exception {
         String roundStr = String.format("%02d", roundNum);
-        
+
         // Color (Cl) - B/N/R/F
         if (roundNode.has("color")) {
             rowData.put("Rd" + roundStr + "Cl", roundNode.get("color").asText());
         }
-        
+
         // Get result first to check for bye
         int result = 0;
         if (roundNode.has("result")) {
             result = roundNode.get("result").asInt();
             rowData.put("Rd" + roundStr + "Res", result);
         }
-        
+
         // Opponent (Adv) - opponent player reference
         if (roundNode.has("opponent")) {
             int jsonOpponent = roundNode.get("opponent").asInt();
@@ -302,13 +302,13 @@ public class PlayerConverter {
                 exemptRow.put("Rd" + roundStr + "Cl", "N");
                 exemptRow.put("Rd" + roundStr + "Adv", playerRef);
                 exemptRow.put("Rd" + roundStr + "Res", 0);
-                
+
                 // Update the EXEMPT row in the table
                 playerTable.updateRow(exemptRow);
             }
         }
     }
-    
+
     /**
      * Helper method to set a field if it exists in the JSON node.
      */
@@ -331,7 +331,39 @@ public class PlayerConverter {
             }
         }
     }
-    
+
+    /**
+     * Helper method to set a field if it exists in the JSON node, with maximum length constraint.
+     * @param rowData The row data map to add the field to
+     * @param playerNode The JSON node containing the field
+     * @param dbField The database field name
+     * @param jsonField The JSON field name
+     * @param maxLength Maximum length for string values (truncates if longer)
+     */
+    private static void setFieldIfExists(Map<String, Object> rowData, JsonNode playerNode, String dbField, String jsonField, int maxLength) {
+        if (playerNode.has(jsonField)) {
+            JsonNode fieldNode = playerNode.get(jsonField);
+            if (!fieldNode.isNull()) {
+                if (fieldNode.isNumber()) {
+                    if (fieldNode.isInt()) {
+                        rowData.put(dbField, fieldNode.asInt());
+                    } else {
+                        rowData.put(dbField, fieldNode.asDouble());
+                    }
+                } else {
+                    String value = fieldNode.asText();
+                    if (!value.isEmpty()) {
+                        // Apply length constraint
+                        if (value.length() > maxLength) {
+                            value = value.substring(0, maxLength);
+                        }
+                        rowData.put(dbField, value);
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Helper method to add a field if it's not null.
      */
