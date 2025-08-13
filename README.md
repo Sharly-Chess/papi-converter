@@ -95,8 +95,8 @@ The JSON configuration file should contain a `variables` object with tournament 
     "pairing": "Suisse",
     "timeControl": "90min+30sec",
     "ratingClass": "Standard",
-    "minRating": "1200",
-    "maxRating": "2400",
+    "ratingThreshold1": "1200",
+    "ratingThreshold2": "2400",
     "tiebreak1": "Brésilien",
     "tiebreak2": "Performance",
     "tiebreak3": "94",
@@ -143,8 +143,8 @@ The converter uses English variable names in JSON and maps them to the correspon
 | `pairing`                  | Pairing        | Pairing system                             |
 | `timeControl`              | Cadence        | Time control                               |
 | `ratingClass`              | ClassElo       | Rating classification                      |
-| `tieBreakLowerRatingLimit` | EloBase1       | Minimum rating                             |
-| `tieBreakUpperRatingLimit` | EloBase2       | Maximum rating                             |
+| `ratingThreshold1`         | EloBase1       | Minimum rating                             |
+| `ratingThreshold2`         | EloBase2       | Maximum rating                             |
 | `tiebreak1`                | Dep1           | First tiebreak system                      |
 | `tiebreak2`                | Dep2           | Second tiebreak system                     |
 | `tiebreak3`                | Dep3           | Third tiebreak system                      |
