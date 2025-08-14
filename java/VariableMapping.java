@@ -31,8 +31,8 @@ public class VariableMapping {
         mapping.put("pairing", "Pairing");
         mapping.put("timeControl", "Cadence");
         mapping.put("ratingClass", "ClassElo");
-        mapping.put("eloBase1", "EloBase1");
-        mapping.put("eloBase2", "EloBase2");
+        mapping.put("ratingThreshold1", "EloBase1");
+        mapping.put("ratingThreshold2", "EloBase2");
         mapping.put("tiebreak1", "Dep1");
         mapping.put("tiebreak2", "Dep2");
         mapping.put("tiebreak3", "Dep3");
