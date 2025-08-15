@@ -80,35 +80,65 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      - name: Install GraalVM
+        uses: graalvm/setup-graalvm@v1
         with:
-          java-version: "21"
-          distribution: "temurin"
+          java-version: "22"
+          distribution: "graalvm"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Visual Studio tools for native-image
+        uses: microsoft/setup-msbuild@v2
+        
+      - name: Setup Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@v1
 
       - name: Setup dependencies
-        run: .\setup_dependencies.bat
+        run: |
+          echo "Setting up fresh dependencies with H2 database..."
+          if exist lib rmdir /s /q lib
+          mkdir lib
+          echo "Downloading JAR dependencies directly..."
+          powershell -Command "Invoke-WebRequest -Uri 'https://repo1.maven.org/maven2/com/healthmarketscience/jackcess/jackcess/4.0.5/jackcess-4.0.5.jar' -OutFile 'lib\jackcess-4.0.5.jar'"
+          powershell -Command "Invoke-WebRequest -Uri 'https://repo1.maven.org/maven2/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar' -OutFile 'lib\commons-lang3-3.12.0.jar'"
+          powershell -Command "Invoke-WebRequest -Uri 'https://repo1.maven.org/maven2/commons-logging/commons-logging/1.2/commons-logging-1.2.jar' -OutFile 'lib\commons-logging-1.2.jar'"
+          powershell -Command "Invoke-WebRequest -Uri 'https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-core/2.15.2/jackson-core-2.15.2.jar' -OutFile 'lib\jackson-core-2.15.2.jar'"
+          powershell -Command "Invoke-WebRequest -Uri 'https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-databind/2.15.2/jackson-databind-2.15.2.jar' -OutFile 'lib\jackson-databind-2.15.2.jar'"
+          powershell -Command "Invoke-WebRequest -Uri 'https://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/2.15.2/jackson-annotations-2.15.2.jar' -OutFile 'lib\jackson-annotations-2.15.2.jar'"
+          powershell -Command "Invoke-WebRequest -Uri 'https://repo1.maven.org/maven2/com/h2database/h2/2.2.224/h2-2.2.224.jar' -OutFile 'lib\h2-2.2.224.jar'"
+          powershell -Command "Invoke-WebRequest -Uri 'https://repo1.maven.org/maven2/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar' -OutFile 'lib\slf4j-api-2.0.9.jar'"
+          powershell -Command "Invoke-WebRequest -Uri 'https://repo1.maven.org/maven2/org/slf4j/slf4j-simple/2.0.9/slf4j-simple-2.0.9.jar' -OutFile 'lib\slf4j-simple-2.0.9.jar'"
+          echo "Verifying dependencies:"
+          dir lib\
+          if exist "lib\h2-2.2.224.jar" (
+            echo "✓ H2 database jar found"
+          ) else (
+            echo "✗ H2 database jar not found"
+            exit /b 1
+          )
         shell: cmd
 
-      - name: Build application
-        run: .\build_app_win.bat
+      - name: Build native application
+        run: |
+          echo "GRAALVM_HOME is: %GRAALVM_HOME%"
+          echo "JAVA_HOME is: %JAVA_HOME%"
+          .\build_app_win.bat
         shell: cmd
 
-      - name: Clean JRE directory
-        run: if exist jre-win rmdir /s /q jre-win
+      - name: Verify build
+        run: |
+          dir dist\
+          echo "Testing native binary:"
+          .\dist\papi-converter.exe --help
+          echo "Native binary verification completed successfully!"
         shell: cmd
-
-      - name: Create JRE
-        run: .\build_jre_win.bat
-        shell: cmd
+        continue-on-error: true
 
       - name: Package distribution
         run: |
           mkdir release\papi-converter-windows
-          xcopy dist release\papi-converter-windows\dist\ /E /I
-          if exist jre-win xcopy jre-win release\papi-converter-windows\jre-win\ /E /I
+          copy dist\papi-converter.exe release\papi-converter-windows\
           xcopy static release\papi-converter-windows\static\ /E /I
-          copy papi-converter.bat release\papi-converter-windows\
           cd release && 7z a papi-converter-windows.zip papi-converter-windows
         shell: cmd
 
