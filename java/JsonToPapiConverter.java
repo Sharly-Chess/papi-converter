@@ -147,6 +147,28 @@ public class JsonToPapiConverter {
     }
     
     /**
+     * Maximum length for INFO table Value column (based on MDB schema)
+     */
+    private static final int MAX_INFO_VALUE_LENGTH = 50;
+    
+    /**
+     * Trims a string to the maximum allowed length for INFO table values.
+     * @param value The string to trim
+     * @return The trimmed string, or null if input is null
+     */
+    private static String trimToMaxLength(String value) {
+        if (value == null) {
+            return null;
+        }
+        if (value.length() <= MAX_INFO_VALUE_LENGTH) {
+            return value;
+        }
+        String trimmed = value.substring(0, MAX_INFO_VALUE_LENGTH);
+        VerboseOutput.alwaysPrintln("  Warning: Trimmed value from " + value.length() + " to " + MAX_INFO_VALUE_LENGTH + " characters: '" + value + "' -> '" + trimmed + "'");
+        return trimmed;
+    }
+    
+    /**
      * Processes tournament variables from JSON and updates the INFO table.
      */
     private static void processVariables(Database db, JsonNode rootNode) throws Exception {
@@ -177,16 +199,19 @@ public class JsonToPapiConverter {
                 // Map English variable name to French
                 String frenchVariable = VariableMapping.englishToFrench(englishVariable);
                 if (frenchVariable != null && VariableMapping.isValidFrenchVariable(frenchVariable)) {
+                    // Trim the value to ensure it fits in the database field
+                    String trimmedValue = trimToMaxLength(value);
+                    
                     Row existingRow = existingRows.get(frenchVariable);
                     if (existingRow != null) {
                         // Overwrite existing row
-                        existingRow.put("Value", value);
+                        existingRow.put("Value", trimmedValue);
                         infoTable.updateRow(existingRow);
-                        VerboseOutput.println("  Updated: " + englishVariable + " (" + frenchVariable + ") = " + value);
+                        VerboseOutput.println("  Updated: " + englishVariable + " (" + frenchVariable + ") = " + trimmedValue);
                     } else {
                         // Add new row
-                        infoTable.addRow(frenchVariable, value);
-                        VerboseOutput.println("  Added: " + englishVariable + " (" + frenchVariable + ") = " + value);
+                        infoTable.addRow(frenchVariable, trimmedValue);
+                        VerboseOutput.println("  Added: " + englishVariable + " (" + frenchVariable + ") = " + trimmedValue);
                     }
                 } else {
                     VerboseOutput.alwaysPrintln("  Warning: Skipping invalid variable: " + englishVariable);

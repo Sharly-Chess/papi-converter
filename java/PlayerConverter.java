@@ -52,10 +52,10 @@ public class PlayerConverter {
         // Player basic information
         setFieldIfExists(rowData, playerNode, "RefFFE", "refFFE");
         setFieldIfExists(rowData, playerNode, "Nr", "nr");
-        setFieldIfExists(rowData, playerNode, "NrFFE", "nrFFE");
-        setFieldIfExists(rowData, playerNode, "Nom", "lastName");
-        setFieldIfExists(rowData, playerNode, "Prenom", "firstName");
-        setFieldIfExists(rowData, playerNode, "Sexe", "gender");
+        setFieldIfExists(rowData, playerNode, "NrFFE", "nrFFE", 6);
+        setFieldIfExists(rowData, playerNode, "Nom", "lastName", 20);
+        setFieldIfExists(rowData, playerNode, "Prenom", "firstName", 20);
+        setFieldIfExists(rowData, playerNode, "Sexe", "gender", 1);
 
         // Dates (birth date)
         if (playerNode.has("birthDate")) {
@@ -72,19 +72,19 @@ public class PlayerConverter {
             }
         }
 
-        setFieldIfExists(rowData, playerNode, "Cat", "category");
+        setFieldIfExists(rowData, playerNode, "Cat", "category", 4);
         setFieldIfExists(rowData, playerNode, "Elo", "elo");
         setFieldIfExists(rowData, playerNode, "Rapide", "rapidElo");
         setFieldIfExists(rowData, playerNode, "Blitz", "blitzElo");
-        setFieldIfExists(rowData, playerNode, "Federation", "federation");
-        setFieldIfExists(rowData, playerNode, "Club", "club");
-        setFieldIfExists(rowData, playerNode, "Ligue", "league");
-        setFieldIfExists(rowData, playerNode, "Fide", "fideElo");
-        setFieldIfExists(rowData, playerNode, "RapideFide", "fideRapidElo");
-        setFieldIfExists(rowData, playerNode, "BlitzFide", "fideBlitzElo");
-        setFieldIfExists(rowData, playerNode, "FideCode", "fideCode");
-        setFieldIfExists(rowData, playerNode, "FideTitre", "fideTitle");
-        setFieldIfExists(rowData, playerNode, "AffType", "licenceType");
+        setFieldIfExists(rowData, playerNode, "Federation", "federation", 3);
+        setFieldIfExists(rowData, playerNode, "Club", "club", 80);
+        setFieldIfExists(rowData, playerNode, "Ligue", "league", 3);
+        setFieldIfExists(rowData, playerNode, "Fide", "fideElo", 1);
+        setFieldIfExists(rowData, playerNode, "RapideFide", "fideRapidElo", 1);
+        setFieldIfExists(rowData, playerNode, "BlitzFide", "fideBlitzElo", 1);
+        setFieldIfExists(rowData, playerNode, "FideCode", "fideCode", 10);
+        setFieldIfExists(rowData, playerNode, "FideTitre", "fideTitle", 2);
+        setFieldIfExists(rowData, playerNode, "AffType", "licenceType", 1);
         setFieldIfExists(rowData, playerNode, "InscriptionRegle", "paid");
         setFieldIfExists(rowData, playerNode, "InscriptionDu", "owed");
         setFieldIfExists(rowData, playerNode, "Fixe", "fixedBoard");
@@ -95,11 +95,11 @@ public class PlayerConverter {
         }
 
         // Contact information
-        setFieldIfExists(rowData, playerNode, "Adresse", "address", 192);
-        setFieldIfExists(rowData, playerNode, "CP", "postalCode", 72);
+        setFieldIfExists(rowData, playerNode, "Adresse", "address", 96);
+        setFieldIfExists(rowData, playerNode, "CP", "postalCode", 36);
         setFieldIfExists(rowData, playerNode, "Tel", "phone", 10);
-        setFieldIfExists(rowData, playerNode, "EMail", "email", 100);
-        setFieldIfExists(rowData, playerNode, "Commentaire", "comment", 510);
+        setFieldIfExists(rowData, playerNode, "EMail", "email", 50);
+        setFieldIfExists(rowData, playerNode, "Commentaire", "comment", 255);
 
         // Initialize all rounds with defaults first
         for (int roundNum = 1; roundNum <= 24; roundNum++) {
@@ -355,7 +355,9 @@ public class PlayerConverter {
                     if (!value.isEmpty()) {
                         // Apply length constraint
                         if (value.length() > maxLength) {
+                            String originalValue = value;
                             value = value.substring(0, maxLength);
+                            VerboseOutput.alwaysPrintln("  Warning: Trimmed " + dbField + " from " + originalValue.length() + " to " + maxLength + " characters: '" + originalValue + "' -> '" + value + "'");
                         }
                         rowData.put(dbField, value);
                     }
