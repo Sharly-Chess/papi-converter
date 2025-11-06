@@ -43,12 +43,12 @@ echo "Copying static resources..."
 cp -r "$ROOT_DIR/static" "$DIST_DIR/"
 
 # Create quick runner as a binary
-cat > "$DIST_DIR/papi-converter" << 'EOF'
+cat > "$ROOT_DIR/papi-converter" << 'EOF'
 #!/bin/bash
-ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
-java -jar "$ROOT_DIR/dist/java/papiconverter.jar" "$@"
+DIR="$(cd "$(dirname "$0")" && pwd)"
+"$DIR/jre-linux/bin/java" -cp "$DIR/dist/java/papiconverter.jar" org.sharlychess.papiconverter.PapiConverter "$@"
 EOF
 
-chmod +x "$DIST_DIR/papi-converter"
+chmod +x "$ROOT_DIR/papi-converter"
 
-echo "Build completed successfully! Binary is located at $DIST_DIR/papi-converter"
+echo "Build completed successfully! Binary is located at $ROOT_DIR/papi-converter"

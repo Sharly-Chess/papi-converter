@@ -22,7 +22,7 @@ A Java utility to convert between JSON configuration files and PAPI (.mdb) tourn
 1. **Download dependencies:**
 
    ```bash
-   ./setup_dependencies.sh
+   ./setup_dependencies_mac.sh
    ```
 
 2. **Build the application:**
