@@ -19,9 +19,9 @@ echo "Cleaning previous build..."
 rm -rf "$BUILD_DIR" "$DIST_DIR"
 mkdir -p "$BUILD_DIR" "$DIST_DIR"
 
-# Build classpath from lib directory
+# Build classpath from lib directory (for compilation)
 LIB_CLASSPATH=""
-for jar in lib/*.jar; do
+for jar in "$ROOT_DIR"/lib/*.jar; do
   if [ -z "$LIB_CLASSPATH" ]; then
     LIB_CLASSPATH="$jar"
   else
@@ -31,10 +31,11 @@ done
 
 # Compile Java source code
 echo "Compiling Java..."
-javac -cp "$LIB_CLASSPATH" -d "$BUILD_DIR" java/*.java
+javac -cp "$LIB_CLASSPATH" -d "$BUILD_DIR" "$JAVA_DIR"/*.java
 
 # Create a new JAR file with compiled classes
 echo "Creating JAR..."
+mkdir -p "$DIST_DIR/java"
 cd "$BUILD_DIR"
 jar cfe "$DIST_DIR/java/papiconverter.jar" org.sharlychess.papiconverter.PapiConverter .
 
@@ -42,13 +43,14 @@ jar cfe "$DIST_DIR/java/papiconverter.jar" org.sharlychess.papiconverter.PapiCon
 echo "Copying static resources..."
 cp -r "$ROOT_DIR/static" "$DIST_DIR/"
 
-# Create quick runner as a binary
+# Create quick runner as a binary using system java + lib/*
+echo "Creating launcher..."
 cat > "$ROOT_DIR/papi-converter" << 'EOF'
 #!/bin/bash
 DIR="$(cd "$(dirname "$0")" && pwd)"
-"$DIR/jre-linux/bin/java" -cp "$DIR/dist/java/papiconverter.jar" org.sharlychess.papiconverter.PapiConverter "$@"
+CP="$DIR/dist/java/papiconverter.jar:$DIR/lib/*"
+"$DIR/jre-linux/bin/java" -cp "$CP" org.sharlychess.papiconverter.PapiConverter "$@"
 EOF
 
 chmod +x "$ROOT_DIR/papi-converter"
-
-echo "Build completed successfully! Binary is located at $ROOT_DIR/papi-converter"
+echo "Done. Use ./papi-converter <args> to run."

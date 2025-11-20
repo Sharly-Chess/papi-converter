@@ -152,10 +152,10 @@ jobs:
     - name: Package distribution
       run: |
         mkdir -p release/papi-converter-linux
-        cp -r papi-converter release
         cp -r dist release/papi-converter-linux/
         cp -r jre-linux release/papi-converter-linux/ || true
         cp -r static release/papi-converter-linux/
+        cp -r lib release/papi-converter-linux/
         cp papi-converter release/papi-converter-linux
         chmod +x release/papi-converter-linux/papi-converter
         cd release && tar -czf papi-converter-linux.tar.gz papi-converter-linux
